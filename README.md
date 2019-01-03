@@ -5,7 +5,7 @@ A golang minecraft bot package
 
 ## PingList a minecraft server
 
-``` 
+```go
 package main
 
 import (
