@@ -1,4 +1,4 @@
-package minecbot
+package gomcbot
 
 import (
 	"fmt"
