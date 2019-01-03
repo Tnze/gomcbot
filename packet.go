@@ -29,7 +29,7 @@ func unpackString(b []byte) string {
 	len, pre := unpackInt(b)
 	// fmt.Println(b)
 	// fmt.Println(len, pre)
-	return string(b[pre : len+1])
+	return string(b[pre : pre+len])
 }
 
 func packPort(n int) []byte {

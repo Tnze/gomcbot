@@ -55,9 +55,7 @@ func PingAndList(addr string, port int) (string, error) {
 		return "", fmt.Errorf("handshake fail: %v", err)
 	}
 
-	conn.sendPacket(Packet{
-		Data: []byte{},
-	})
+	conn.sendPacket(Packet{ID: 0x00, Data: []byte{}})
 	if err != nil {
 		return "", fmt.Errorf("send list packect fail: %v", err)
 	}
@@ -65,5 +63,6 @@ func PingAndList(addr string, port int) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("send list packect fail: %v", err)
 	}
+	// fmt.Println(resp)
 	return string(unpackString(resp.Data)), nil
 }
