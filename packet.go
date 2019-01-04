@@ -12,34 +12,27 @@ type Packet struct {
 }
 
 func (p *Packet) pack() (pack []byte) {
-	pack = append(pack, packInt(len(p.Data)+1)...) //len
-	pack = append(pack, p.ID)                      //data
-	pack = append(pack, p.Data...)                 //data
+	pack = append(pack, packVarInt(len(p.Data)+1)...) //len
+	pack = append(pack, p.ID)                         //data
+	pack = append(pack, p.Data...)                    //data
 	return
 }
 
 func packString(s string) (ps []byte) {
 	byteString := []byte(s)
-	ps = append(ps, packInt(len(byteString))...) //len
-	ps = append(ps, byteString...)               //data
+	ps = append(ps, packVarInt(len(byteString))...) //len
+	ps = append(ps, byteString...)                  //data
 	return
 }
 
-func unpackString(b []byte) string {
-	len, pre := unpackInt(b)
-	// fmt.Println(b)
-	// fmt.Println(len, pre)
-	return string(b[pre : pre+len])
-}
-
-func packPort(n int) []byte {
+func packUint16(n int) []byte {
 	return []byte{
 		byte(n >> 8),
 		byte(n & 0xFF),
 	}
 }
 
-func packInt(n int) (VarInt []byte) {
+func packVarInt(n int) (VarInt []byte) {
 	for n != 0 {
 		b := n & 0x7F
 		n >>= 7
@@ -51,7 +44,14 @@ func packInt(n int) (VarInt []byte) {
 	return
 }
 
-func unpackInt(b []byte) (n, len int) {
+func unpackString(b []byte) (s string, len int) {
+	len, pre := unpackVarInt(b)
+	// fmt.Println(b)
+	// fmt.Println(len, pre)
+	return string(b[pre : pre+len]), len + pre
+}
+
+func unpackVarInt(b []byte) (n, len int) {
 	for i := 0; i < 5; i++ { //读数据前的长度标记
 		n |= (int(b[i]&0x7F) << uint(7*i))
 		len++

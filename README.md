@@ -18,6 +18,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(resp)
+	fmt.Println(resp)// for json format of resp see https://wiki.vg/Server_List_Ping#Response
 }
 ```
