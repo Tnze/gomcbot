@@ -1,13 +1,15 @@
 package gomcbot
 
 import (
-	"./authenticate"
+	// "./authenticate"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/x509"
+	// "encoding/base64"
+	// "encoding/pem"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,38 +18,27 @@ import (
 )
 
 type encryptionRequest struct {
-	ServerID          string
-	PublicKeyLength   int
-	PublicKey         []byte
-	VerifyTokenLength int
-	VerifyToken       []byte
+	ServerID    string
+	PublicKey   []byte
+	VerifyToken []byte
 }
 
-func unpackEncryptionRequest(p Packet) (er encryptionRequest) {
+func unpackEncryptionRequest(p packet) (er encryptionRequest) {
 	i := 0
 	serverID, length := unpackString(p.Data[i:])
 	i += length
 	publicKeyLength, length := unpackVarInt(p.Data[i:])
 	i += length
-	publicKey := p.Data[i : i+publicKeyLength]
-	i += publicKeyLength
+	publicKey := p.Data[i : i+int(publicKeyLength)]
+	i += int(publicKeyLength)
 	verifyTokenLength, length := unpackVarInt(p.Data[i:])
 	i += length
-	verifyToken := p.Data[i : i+verifyTokenLength]
+	verifyToken := p.Data[i : i+int(verifyTokenLength)]
 	return encryptionRequest{
-		ServerID:          serverID,
-		PublicKeyLength:   publicKeyLength,
-		PublicKey:         publicKey,
-		VerifyTokenLength: verifyTokenLength,
-		VerifyToken:       verifyToken,
+		ServerID:    serverID,
+		PublicKey:   publicKey,
+		VerifyToken: verifyToken,
 	}
-}
-
-func unpackLoginSuccess(p Packet) (uuid string, userName string) {
-	len := 0
-	uuid, len = unpackString(p.Data[len:])
-	userName, _ = unpackString(p.Data[len:])
-	return
 }
 
 // AuthDigest computes a special SHA-1 digest required for Minecraft web
@@ -56,11 +47,11 @@ func unpackLoginSuccess(p Packet) (uuid string, userName string) {
 //
 // Also many, many thanks to SirCmpwn and his wonderful gist (C#):
 // https://gist.github.com/SirCmpwn/404223052379e82f91e6
-func AuthDigest(serverID, sharedSecret, publicKey string) string {
+func AuthDigest(serverID string, sharedSecret, publicKey []byte) string {
 	h := sha1.New()
 	io.WriteString(h, serverID)
-	io.WriteString(h, sharedSecret)
-	io.WriteString(h, publicKey)
+	h.Write(sharedSecret)
+	h.Write(publicKey)
 	hash := h.Sum(nil)
 
 	// Check for negative hashes
@@ -91,13 +82,19 @@ func twosComplement(p []byte) []byte {
 	return p
 }
 
-func loginAuth(auth authenticate.Response, er encryptionRequest) error {
-	digest := AuthDigest(er.ServerID, string(er.VerifyToken), string(er.PublicKey))
-	resp, err := http.Post("https://sessionserver.mojang.com/session/minecraft/join",
-		"application/json",
+func loginAuth(AsTk, UUID string, er encryptionRequest) error {
+	digest := AuthDigest(er.ServerID, er.VerifyToken, er.PublicKey)
+	//Post
+	client := http.Client{}
+	PostRequest, err := http.NewRequest(http.MethodPost, "https://sessionserver.mojang.com/session/minecraft/join",
 		strings.NewReader(fmt.Sprintf(`{"accessToken": %q,"selectedProfile": %q,"serverId": %q}`,
-			auth.AccessToken, auth.SelectedProfile.ID, digest)),
-	)
+			AsTk, UUID, digest)))
+	if err != nil {
+		return fmt.Errorf("make request error: %v", err)
+	}
+	PostRequest.Header.Set("User-Agent", "gomcbot")
+	PostRequest.Header.Set("Connection", "keep-alive")
+	resp, err := client.Do(PostRequest)
 	if err != nil {
 		return fmt.Errorf("post fail: %v", err)
 	}
@@ -111,7 +108,7 @@ func loginAuth(auth authenticate.Response, er encryptionRequest) error {
 }
 
 // AES/CFB8 with random key
-func newSymmetricEncryption() (key []byte, esteam, dsteam cipher.Stream) {
+func newSymmetricEncryption() (key []byte, encodeStream cipher.Stream) {
 	key = make([]byte, 16)
 	rand.Read(key) //生成密钥
 
@@ -119,19 +116,20 @@ func newSymmetricEncryption() (key []byte, esteam, dsteam cipher.Stream) {
 	if err != nil {
 		panic(err)
 	}
-	esteam = cipher.NewCFBDecrypter(b, key)
-	dsteam = cipher.NewCFBDecrypter(b, key)
+	encodeStream = cipher.NewCFBDecrypter(b, key)
+	// c.decodeStream = cipher.NewCFBDecrypter(b, c.secretKey)
 	return
 }
 
 // 1024-bit RSA
-func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp *Packet, err error) {
-	pk, err := x509.ParsePKCS1PublicKey(publicKey)
+func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp *packet, err error) {
+
+	iPK, err := x509.ParsePKIXPublicKey(publicKey) // Decode Public Key
 	if err != nil {
 		err = fmt.Errorf("decode public key fail: %v", err)
 		return
 	}
-
+	pk := iPK.(*rsa.PublicKey)
 	cryptPK, err := rsa.EncryptPKCS1v15(rand.Reader, pk, shareSecret)
 	if err != nil {
 		err = fmt.Errorf("encryption share secret fail: %v", err)
@@ -142,13 +140,13 @@ func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp *
 		err = fmt.Errorf("encryption verfy tokenfail: %v", err)
 		return
 	}
-
+	// fmt.Println(len(cryptPK), len(cryptPK))
 	var data []byte
-	data = append(data, packVarInt(len(cryptPK))...)
+	data = append(data, packVarInt(int32(len(cryptPK)))...)
 	data = append(data, cryptPK...)
-	data = append(data, packVarInt(len(verifyT))...)
+	data = append(data, packVarInt(int32(len(verifyT)))...)
 	data = append(data, verifyT...)
-	erp = &Packet{
+	erp = &packet{
 		ID:   0x01,
 		Data: data,
 	}

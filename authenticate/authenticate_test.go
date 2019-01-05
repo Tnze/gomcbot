@@ -21,7 +21,7 @@ func TestEncodingPayload(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	resp, err := Authenticate("email", "password")
+	resp, err := Authenticate("", "")
 	if err != nil {
 		t.Fatal(err)
 	}
