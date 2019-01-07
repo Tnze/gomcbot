@@ -1,17 +1,16 @@
 package gomcbot
 
 import (
-	// "./authenticate"
+	"./CFB8"
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/x509"
-	// "encoding/base64"
-	// "encoding/pem"
+	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -49,7 +48,7 @@ func unpackEncryptionRequest(p packet) (er encryptionRequest) {
 // https://gist.github.com/SirCmpwn/404223052379e82f91e6
 func AuthDigest(serverID string, sharedSecret, publicKey []byte) string {
 	h := sha1.New()
-	io.WriteString(h, serverID)
+	h.Write([]byte(serverID))
 	h.Write(sharedSecret)
 	h.Write(publicKey)
 	hash := h.Sum(nil)
@@ -82,13 +81,28 @@ func twosComplement(p []byte) []byte {
 	return p
 }
 
+type request struct {
+	AccessToken     string `json:"accessToken"`
+	SelectedProfile string `json:"selectedProfile"`
+	ServerID        string `json:"serverId"`
+}
+
 func loginAuth(AsTk, UUID string, er encryptionRequest) error {
 	digest := AuthDigest(er.ServerID, er.VerifyToken, er.PublicKey)
 	//Post
 	client := http.Client{}
+	requestPacket, err := json.Marshal(
+		request{
+			AccessToken:     AsTk,
+			SelectedProfile: UUID,
+			ServerID:        digest,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("create request packet to authenticate faile: %v", err)
+	}
 	PostRequest, err := http.NewRequest(http.MethodPost, "https://sessionserver.mojang.com/session/minecraft/join",
-		strings.NewReader(fmt.Sprintf(`{"accessToken": %q,"selectedProfile": %q,"serverId": %q}`,
-			AsTk, UUID, digest)))
+		bytes.NewReader(requestPacket))
 	if err != nil {
 		return fmt.Errorf("make request error: %v", err)
 	}
@@ -99,8 +113,8 @@ func loginAuth(AsTk, UUID string, er encryptionRequest) error {
 		return fmt.Errorf("post fail: %v", err)
 	}
 	defer resp.Body.Close()
+
 	body, _ := ioutil.ReadAll(resp.Body)
-	// fmt.Println(resp)
 	if resp.Status != "204 No Content" {
 		return fmt.Errorf("auth fail: %s", string(body))
 	}
@@ -108,7 +122,7 @@ func loginAuth(AsTk, UUID string, er encryptionRequest) error {
 }
 
 // AES/CFB8 with random key
-func newSymmetricEncryption() (key []byte, encodeStream cipher.Stream) {
+func newSymmetricEncryption() (key []byte, encoStream, decoStream cipher.Stream) {
 	key = make([]byte, 16)
 	rand.Read(key) //生成密钥
 
@@ -116,8 +130,8 @@ func newSymmetricEncryption() (key []byte, encodeStream cipher.Stream) {
 	if err != nil {
 		panic(err)
 	}
-	encodeStream = cipher.NewCFBDecrypter(b, key)
-	// c.decodeStream = cipher.NewCFBDecrypter(b, c.secretKey)
+	decoStream = CFB8.NewCFB8Decrypt(b, key)
+	encoStream = CFB8.NewCFB8Encrypt(b, key)
 	return
 }
 

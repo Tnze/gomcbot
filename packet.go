@@ -1,10 +1,11 @@
 package gomcbot
 
 import (
+	"bufio"
+	"bytes"
+	"compress/zlib"
 	"fmt"
 	"io"
-	// "io/ioutil"
-	"net"
 )
 
 // Packet define a net data package
@@ -53,8 +54,6 @@ func packVarInt(n int32) (VarInt []byte) {
 func unpackString(b []byte) (s string, len int) {
 	l, pre := unpackVarInt(b)
 	len = int(l)
-	// fmt.Println(b)
-	// fmt.Println(len, pre)
 	return string(b[pre : pre+len]), len + pre
 }
 
@@ -72,23 +71,60 @@ func unpackVarInt(b []byte) (num int32, len int) {
 }
 
 // recvPacket recive a packet from server
-func recvPacket(conn net.Conn) ([]byte, error) {
-	data := make([]byte, 1) //len=1
-	len := 0
+func recvPacket(s *bufio.Reader, useZlib bool) (*packet, error) {
+	var len int
 	for i := 0; i < 5; i++ { //读数据前的长度标记
-		if _, err := io.ReadFull(conn, data); err != nil {
+		b, err := s.ReadByte()
+		if err != nil {
 			return nil, fmt.Errorf("read len of packet fail: %v", err)
 		}
-		len |= (int(data[0]&0x7F) << uint(7*i))
-		if data[0]&0x80 == 0 {
+		len |= (int(b&0x7F) << uint(7*i))
+		if b&0x80 == 0 {
 			break
 		}
 	}
-	data = make([]byte, len)
-	_, err := io.ReadAtLeast(conn, data, len) //读取数据
-	if err != nil {
-		return nil, fmt.Errorf("read packet data fail: %v", err)
+
+	data := make([]byte, len) //读包内容
+	var err error
+	for i := 0; i < len; i++ {
+		data[i], err = s.ReadByte()
+		if err != nil {
+			return nil, fmt.Errorf("read content of packet fail: %v", err)
+		}
 	}
 
-	return data, nil
+	//解压数据
+	if useZlib {
+		return unCompress(data)
+	}
+
+	return &packet{
+		ID:   data[0],
+		Data: data[1:],
+	}, nil
+}
+
+//读取一个压缩的包
+func unCompress(data []byte) (*packet, error) {
+	sizeUncompressed, len := unpackVarInt(data)
+	uncompressData := make([]byte, sizeUncompressed)
+	if sizeUncompressed != 0 { // != 0 means compressed, let's decompress
+		b := bytes.NewReader(data)
+
+		r, err := zlib.NewReader(b)
+		defer r.Close()
+		if err != nil {
+			return nil, fmt.Errorf("decompress fail: %v", err)
+		}
+		_, err = io.ReadFull(r, uncompressData)
+		if err != nil {
+			return nil, fmt.Errorf("decompress fail: %v", err)
+		}
+	} else {
+		uncompressData = data[len:]
+	}
+	return &packet{
+		ID:   uncompressData[0],
+		Data: uncompressData[1:],
+	}, nil
 }
