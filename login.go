@@ -2,6 +2,7 @@ package gomcbot
 
 import (
 	"./CFB8"
+	pk "./packet"
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
@@ -22,15 +23,15 @@ type encryptionRequest struct {
 	VerifyToken []byte
 }
 
-func unpackEncryptionRequest(p packet) (er encryptionRequest) {
+func unpackEncryptionRequest(p pk.Packet) (er encryptionRequest) {
 	i := 0
-	serverID, length := unpackString(p.Data[i:])
+	serverID, length := pk.UnpackString(p.Data[i:])
 	i += length
-	publicKeyLength, length := unpackVarInt(p.Data[i:])
+	publicKeyLength, length := pk.UnpackVarInt(p.Data[i:])
 	i += length
 	publicKey := p.Data[i : i+int(publicKeyLength)]
 	i += int(publicKeyLength)
-	verifyTokenLength, length := unpackVarInt(p.Data[i:])
+	verifyTokenLength, length := pk.UnpackVarInt(p.Data[i:])
 	i += length
 	verifyToken := p.Data[i : i+int(verifyTokenLength)]
 	return encryptionRequest{
@@ -136,31 +137,30 @@ func newSymmetricEncryption() (key []byte, encoStream, decoStream cipher.Stream)
 }
 
 // 1024-bit RSA
-func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp *packet, err error) {
+func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp *pk.Packet, err error) {
 
 	iPK, err := x509.ParsePKIXPublicKey(publicKey) // Decode Public Key
 	if err != nil {
 		err = fmt.Errorf("decode public key fail: %v", err)
 		return
 	}
-	pk := iPK.(*rsa.PublicKey)
-	cryptPK, err := rsa.EncryptPKCS1v15(rand.Reader, pk, shareSecret)
+	rsaKey := iPK.(*rsa.PublicKey)
+	cryptPK, err := rsa.EncryptPKCS1v15(rand.Reader, rsaKey, shareSecret)
 	if err != nil {
 		err = fmt.Errorf("encryption share secret fail: %v", err)
 		return
 	}
-	verifyT, err := rsa.EncryptPKCS1v15(rand.Reader, pk, verifyToken)
+	verifyT, err := rsa.EncryptPKCS1v15(rand.Reader, rsaKey, verifyToken)
 	if err != nil {
 		err = fmt.Errorf("encryption verfy tokenfail: %v", err)
 		return
 	}
-	// fmt.Println(len(cryptPK), len(cryptPK))
 	var data []byte
-	data = append(data, packVarInt(int32(len(cryptPK)))...)
+	data = append(data, pk.PackVarInt(int32(len(cryptPK)))...)
 	data = append(data, cryptPK...)
-	data = append(data, packVarInt(int32(len(verifyT)))...)
+	data = append(data, pk.PackVarInt(int32(len(verifyT)))...)
 	data = append(data, verifyT...)
-	erp = &packet{
+	erp = &pk.Packet{
 		ID:   0x01,
 		Data: data,
 	}

@@ -13,12 +13,16 @@ func TestPingAndList(t *testing.T) {
 }
 
 func TestJoinServer(t *testing.T) {
-	p := Player{
+	p := Auth{
 		Name: "Mi_Xi_Xi",
 		UUID: "ff7a038f-265c-4d42-b0cf-04c575896469",
 		AsTk: "",
 	}
-	_, err := p.JoinServer("localhost", 25565)
+	g, err := p.JoinServer("localhost", 25565)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = g.HandleGame()
 	if err != nil {
 		t.Fatal(err)
 	}

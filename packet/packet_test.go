@@ -1,4 +1,4 @@
-package gomcbot
+package packet
 
 import "testing"
 
@@ -28,7 +28,7 @@ var VarInt = [][]byte{
 
 func TestPackInt(t *testing.T) {
 	for i, v := range Int {
-		p := packVarInt(v)
+		p := PackVarInt(v)
 		if !bytesEqual(p, VarInt[i]) {
 			t.Errorf("pack int %d should be \"% x\" but not \"% x\"", v, VarInt[i], p)
 		}
@@ -49,9 +49,29 @@ func bytesEqual(a, b []byte) bool {
 
 func TestUnpackInt(t *testing.T) {
 	for i, v := range VarInt {
-		p, _ := unpackVarInt(v)
+		p, _ := UnpackVarInt(v)
 		if Int[i] != p {
 			t.Errorf("unpack \"% x\" should be %d but not %d", v, Int[i], p)
 		}
 	}
+}
+
+func TestPositionPack(t *testing.T) {
+	// x (-33554432 to 33554431), y (-2048 to 2047), z (-33554432 to 33554431)
+
+	for x := -33554432; x < 33554432; x += 55443 {
+		for y := -2048; y < 2048; y += 48 {
+			for z := -33554432; z < 33554432; z += 55443 {
+				p := PackPosition(x, y, z)
+				x1, y1, z1 := UnpackPosition(p)
+				if x1 != x || y1 != y || z1 != z {
+					t.Errorf("cannot pack (%d, %d, %d)", x, y, z)
+				}
+			}
+		}
+	}
+
+	// p := packPosition(33531840, 2032, 33531840)
+	// t.Log(unpackInt64(p))
+	// t.Log(unpackPosition(p))
 }

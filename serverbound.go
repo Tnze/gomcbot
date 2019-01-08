@@ -1,13 +1,17 @@
 package gomcbot
 
+import (
+	pk "./packet"
+)
+
 // newHandshakePacket 构造了一个Handshake包
-func newHandshakePacket(protocolVersion int, addr string, port int, nextState byte) *packet {
-	var hsData []byte                                              //Handshake packet data
-	hsData = append(hsData, packVarInt(int32(protocolVersion))...) //Protocol Version
-	hsData = append(hsData, packString(addr)...)
-	hsData = append(hsData, packUint16(uint16(port))...)
+func newHandshakePacket(protocolVersion int, addr string, port int, nextState byte) *pk.Packet {
+	var hsData []byte                                                 //Handshake packet data
+	hsData = append(hsData, pk.PackVarInt(int32(protocolVersion))...) //Protocol Version
+	hsData = append(hsData, pk.PackString(addr)...)
+	hsData = append(hsData, pk.PackUint16(uint16(port))...)
 	hsData = append(hsData, nextState)
-	pack := packet{
+	pack := pk.Packet{
 		ID:   0,
 		Data: hsData,
 	}
@@ -15,10 +19,10 @@ func newHandshakePacket(protocolVersion int, addr string, port int, nextState by
 }
 
 // newLoginStartPakcket 构造一个LoginStart包
-func newLoginStartPacket(userName string) *packet {
+func newLoginStartPacket(userName string) *pk.Packet {
 	var data []byte
-	data = append(data, packString(userName)...)
-	pack := packet{
+	data = append(data, pk.PackString(userName)...)
+	pack := pk.Packet{
 		ID:   0,
 		Data: data,
 	}
