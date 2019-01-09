@@ -38,11 +38,13 @@ var DefaultSettings = Settings{
 	MainHand:           1,
 }
 
-func (s *Settings) pack() (p []byte) {
-	p = append(p, pk.PackString(s.Locale)...)
-	p = append(p, byte(s.ViewDistance))
-	p = append(p, pk.PackVarInt(int32(s.ChatMode))...)
-	p = append(p, pk.PackBoolean(s.ChatColors), byte(s.DisplayedSkinParts))
-	p = append(p, pk.PackVarInt(int32(s.MainHand))...)
+func (s *Settings) pack() (p *pk.Packet) {
+	p = new(pk.Packet)
+	p.ID = 0x04
+	p.Data = append(p.Data, pk.PackString(s.Locale)...)
+	p.Data = append(p.Data, byte(s.ViewDistance))
+	p.Data = append(p.Data, pk.PackVarInt(int32(s.ChatMode))...)
+	p.Data = append(p.Data, pk.PackBoolean(s.ChatColors), byte(s.DisplayedSkinParts))
+	p.Data = append(p.Data, pk.PackVarInt(int32(s.MainHand))...)
 	return
 }

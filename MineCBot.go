@@ -86,6 +86,7 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 	g.settings = DefaultSettings //默认设置
 	g.reciver = bufio.NewReader(g.conn)
 	g.sender = g.conn
+	g.world.Entities = make(map[int32]Entity)
 
 	//握手
 	hsPacket := newHandshakePacket(404, addr, port, 2) //构造握手包

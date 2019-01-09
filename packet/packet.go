@@ -53,11 +53,27 @@ func PackString(s string) (p []byte) {
 
 // PackUint16 打包一个16位无符号整数
 func PackUint16(n uint16) (p []byte) {
-	// p = make([]byte, 2)
-	// binary.BigEndian.PutUint16(p, n)
 	p = []byte{
 		byte(n >> 8),
 		byte(n),
+	}
+	return
+}
+
+// PackUint32 打包一个32位无符号整数
+func PackUint32(n uint32) (p []byte) {
+	p = []byte{
+		byte(n >> 24), byte(n >> 16),
+		byte(n >> 8), byte(n),
+	}
+	return
+}
+
+// PackUint64 打包一个64位无符号整数
+func PackUint64(n uint64) (p []byte) {
+	p = []byte{
+		byte(n >> 56), byte(n >> 48), byte(n >> 40), byte(n >> 32),
+		byte(n >> 24), byte(n >> 16), byte(n >> 8), byte(n),
 	}
 	return
 }
@@ -90,6 +106,18 @@ func PackPosition(x, y, z int) (p []byte) {
 	return
 }
 
+//PackFloat 打包一个32位浮点数
+func PackFloat(f float32) (p []byte) {
+	n := *(*uint32)(unsafe.Pointer(&f))
+	return PackUint32(n)
+}
+
+//PackDouble 打包一个64位浮点数
+func PackDouble(d float64) (p []byte) {
+	n := *(*uint64)(unsafe.Pointer(&d))
+	return PackUint64(n)
+}
+
 //PackBoolean 打包一个布尔值
 func PackBoolean(b bool) byte {
 	if b {
@@ -118,6 +146,11 @@ func UnpackVarInt(b []byte) (num int32, len int) {
 	}
 	num = int32(n) //这里要把超过int32的负数溢出
 	return
+}
+
+//UnpackInt16 读取一个16位有符号整数
+func UnpackInt16(b []byte) (num int16) {
+	return int16(b[0])<<8 | int16(b[1])
 }
 
 //UnpackInt32 读取一个32位有符号整数

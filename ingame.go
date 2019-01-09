@@ -7,9 +7,18 @@ import (
 
 // Player includes the player's status
 type Player struct {
-	HeldItem   int     //拿着的物品栏位
-	X, Y, Z    float64 //Player Position
+	entityID int32
+	UUID     [2]int64 //128bit UUID
+	HeldItem int      //拿着的物品栏位
+
+	X, Y, Z    float64
 	Yaw, Pitch float32
+	OnGround   bool
+}
+
+//EntityID get player's entity ID
+func (p *Player) EntityID() int32 {
+	return p.entityID
 }
 
 //PlayerInfo content player info in server
@@ -33,26 +42,27 @@ type PlayerAbilities struct {
 
 //Position is a 3D vector
 type Position struct {
-	x, y, z int
+	X, Y, Z int
 }
 
 //HandleGame recive server packet and response them correct
 func (g *Game) HandleGame() error {
 	g.sendChan = make(chan pk.Packet, 64)
-	for {
-		if len(g.sendChan) > 0 { //如果有包要发送则发送包
+	go func() {
+		for {
 			p := <-g.sendChan
 			err := g.sendPacket(&p)
 			if err != nil {
-				return fmt.Errorf("send packet in game fail: %v", err)
+				fmt.Printf("send packet in game fail: %v\n", err)
 			}
 		}
+	}()
+	for {
 
+		// fmt.Println("Reading Packet")
 		//Recive Packet
 		pack, err := g.recvPacket()
 		if err != nil {
-			// fmt.Printf("recv packet in game fail: %v\n", err)
-			// continue
 			return fmt.Errorf("recv packet in game fail: %v", err)
 		}
 
@@ -67,12 +77,16 @@ func (g *Game) HandleGame() error {
 			handleSpawnPositionPacket(g, pack)
 		case 0x2E:
 			handlePlayerAbilitiesPacket(g, pack)
+			g.sendChan <- *g.settings.pack()
 		case 0x3D:
 			handleHeldItemPacket(g, pack)
 		case 0x22:
 			handleChunkDataPacket(g, pack)
 		case 0x32:
 			handlePlayerPositionAndLookPacket(g, pack)
+			fmt.Println("Pos: ", g.player.X, g.player.Y, g.player.Z)
+			sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
+			fmt.Println("Send PositionAndLookPacket")
 		case 0x54:
 			handleDeclareRecipesPacket(g, pack)
 		case 0x29:
@@ -80,10 +94,17 @@ func (g *Game) HandleGame() error {
 		case 0x39:
 			handleEntityHeadLook(g, pack)
 		case 0x28:
-			handleEntityRelativeMove(g, pack)
+			handleEntityRelativeMovePacket(g, pack)
+		case 0x21:
+			handleKeepAlivePacket(g, pack)
+		case 0x27:
+			handleEntityPacket(g, pack)
+		case 0x05:
+			handleSpawnPlayer(g, pack)
 		default:
-			fmt.Printf("ignore pack id %X\n", pack.ID)
+			// fmt.Printf("ignore pack id %X\n", pack.ID)
 		}
+		sendPlayerLookPacket(g)
 	}
 }
 
@@ -102,7 +123,6 @@ func handleJoinGamePacket(g *Game, p *pk.Packet) {
 }
 
 func handlePluginPacket(g *Game, p *pk.Packet) {
-	fmt.Println("ignore Plugin Packet")
 	// fmt.Println("Plugin Packet: ", p)
 }
 
@@ -111,7 +131,7 @@ func handleServerDifficultyPacket(g *Game, p *pk.Packet) {
 }
 
 func handleSpawnPositionPacket(g *Game, p *pk.Packet) {
-	g.Info.SpawnPosition.x, g.Info.SpawnPosition.y, g.Info.SpawnPosition.z =
+	g.Info.SpawnPosition.X, g.Info.SpawnPosition.Y, g.Info.SpawnPosition.Z =
 		pk.UnpackPosition(p.Data)
 }
 
@@ -126,7 +146,7 @@ func handleHeldItemPacket(g *Game, p *pk.Packet) {
 }
 
 func handleChunkDataPacket(g *Game, p *pk.Packet) {
-
+	unpackChunkDataPacket(p)
 }
 
 func handlePlayerPositionAndLookPacket(g *Game, p *pk.Packet) {
@@ -184,20 +204,116 @@ func handleDeclareRecipesPacket(g *Game, p *pk.Packet) {
 }
 
 func handleEntityLookAndRelativeMove(g *Game, p *pk.Packet) {
+	ID, index := pk.UnpackVarInt(p.Data)
+	E := g.world.Entities[ID]
+	if E != nil {
+		P, ok := E.(*Player)
+		if !ok {
+			return
+		}
+		DeltaX := pk.UnpackInt16(p.Data[index:])
+		DeltaY := pk.UnpackInt16(p.Data[index+2:])
+		DeltaZ := pk.UnpackInt16(p.Data[index+4:])
+		index += 3 * 2
+		P.Yaw += float32(p.Data[index]) * (1.0 / 256)
+		P.Pitch += float32(p.Data[index+1]) * (1.0 / 256)
+		index += 2
+		P.OnGround = p.Data[index] != 0x00
 
+		P.X += float64(DeltaX) / 128
+		P.Y += float64(DeltaY) / 128
+		P.Z += float64(DeltaZ) / 128
+	}
 }
 
 func handleEntityHeadLook(g *Game, p *pk.Packet) {
 
 }
 
-func handleEntityRelativeMove(g *Game, p *pk.Packet) {
+func handleEntityRelativeMovePacket(g *Game, p *pk.Packet) {
+	ID, index := pk.UnpackVarInt(p.Data)
+	E := g.world.Entities[ID]
+	if E != nil {
+		P, ok := E.(*Player)
+		if !ok {
+			return
+		}
+		DeltaX := pk.UnpackInt16(p.Data[index:])
+		DeltaY := pk.UnpackInt16(p.Data[index+2:])
+		DeltaZ := pk.UnpackInt16(p.Data[index+4:])
+		index += 3 * 2
+		P.OnGround = p.Data[index] != 0x00
 
+		P.X += float64(DeltaX) / 128
+		P.Y += float64(DeltaY) / 128
+		P.Z += float64(DeltaZ) / 128
+	}
+}
+
+func handleKeepAlivePacket(g *Game, p *pk.Packet) {
+	KeepAliveID := pk.UnpackInt64(p.Data)
+	sendKeepAlivePacket(g, KeepAliveID)
+}
+
+func handleEntityPacket(g *Game, p *pk.Packet) {
+	// initialize an entity.
+}
+
+func handleSpawnPlayer(g *Game, p *pk.Packet) {
+	np := new(Player)
+	var index int
+	np.entityID, index = pk.UnpackVarInt(p.Data[index:])
+	np.UUID[0] = pk.UnpackInt64(p.Data[index:])
+	np.UUID[1] = pk.UnpackInt64(p.Data[index+8:])
+	index += 16
+	np.X = pk.UnpackDouble(p.Data[index:])
+	np.Y = pk.UnpackDouble(p.Data[index+8:])
+	np.Z = pk.UnpackDouble(p.Data[index+16:])
+	index += 3 * 8
+	np.Yaw = float32(p.Data[index]) * (1.0 / 256)
+	np.Pitch = float32(p.Data[index+1]) * (1.0 / 256)
+	index += 2
+
+	g.world.Entities[np.entityID] = np //把该玩家添加到全局实体表里面
 }
 
 func sendTeleportConfirmPacket(g *Game, TeleportID int32) {
 	g.sendChan <- pk.Packet{
 		ID:   0x00,
 		Data: pk.PackVarInt(TeleportID),
+	}
+}
+
+func sendPlayerPositionAndLookPacket(g *Game) {
+	var data []byte
+	data = append(data, pk.PackDouble(g.player.X)...)
+	data = append(data, pk.PackDouble(g.player.Y)...)
+	data = append(data, pk.PackDouble(g.player.Z)...)
+	data = append(data, pk.PackFloat(g.player.Yaw)...)
+	data = append(data, pk.PackFloat(g.player.Pitch)...)
+	data = append(data, pk.PackBoolean(g.player.OnGround))
+
+	g.sendChan <- pk.Packet{
+		ID:   0x11,
+		Data: data,
+	}
+}
+
+func sendKeepAlivePacket(g *Game, KeepAliveID int64) {
+	g.sendChan <- pk.Packet{
+		ID:   0x0E,
+		Data: pk.PackUint64(uint64(KeepAliveID)),
+	}
+	fmt.Println("Keep Alive")
+}
+
+func sendPlayerLookPacket(g *Game) {
+	var data []byte
+	data = append(data, pk.PackFloat(g.player.Yaw)...)
+	data = append(data, pk.PackFloat(g.player.Pitch)...)
+	data = append(data, pk.PackBoolean(g.player.OnGround))
+	g.sendChan <- pk.Packet{
+		ID:   0x12,
+		Data: data,
 	}
 }
