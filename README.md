@@ -22,17 +22,47 @@ func main() {
 }
 ```
 
-## Join a server
-> Note: gomcbot can't join a online-mode server currently.
+## Get a mojang AccessToken (Login)
 ```go
-p := Player{
-	Name: "Tnze",
-	UUID: "58f6356e-b30c-4811-8bfc-d72a9ee99e73",
-	AsTk: "",
+package main
+
+import (
+	"fmt"
+	auth "github.com/Tnze/gomcbot/authenticate"
+)
+
+func main() {
+	resp, err := auth.Authenticate("Your Email", "Your Password")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(resp)
 }
-game, err = p.JoinServer("localhost", 25565)
-if err != nil {
-	panic(err)
+```
+
+## Join a server
+> Note: gomcbot can't join a online-mode server currently. And I have no idea of why I can't pass the authenticate.
+```go
+package main
+
+import (
+	"fmt"
+	gmcb "github.com/Tnze/gomcbot"
+)
+
+func main() {
+	p := Auth{
+		Name: "Mi_Xi_Xi",
+		UUID: "ff7a038f-265c-4d42-b0cf-04c575896469",
+		AsTk: "",
+	}
+	game, err := p.JoinServer("localhost", 25565)
+	if err != nil {
+		panic(err)
+	}
+	err = game.HandleGame()
+	if err != nil {
+		panic(err)
+	}
 }
-...
 ```
