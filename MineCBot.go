@@ -83,10 +83,13 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 		err = fmt.Errorf("cannot connect the server %q: %v", addr, err)
 		return
 	}
+
+	//init Game
 	g.settings = DefaultSettings //默认设置
 	g.reciver = bufio.NewReader(g.conn)
 	g.sender = g.conn
 	g.world.Entities = make(map[int32]Entity)
+	g.world.chunks = make(map[Location]*Chunk)
 
 	//握手
 	hsPacket := newHandshakePacket(404, addr, port, 2) //构造握手包
@@ -119,38 +122,10 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 			err = fmt.Errorf("connect disconnected by server because: %s", s)
 			return
 		case 0x01: //Encryption Request
-			key, encoStream, decoStream := newSymmetricEncryption() //创建AES对称加密密钥
-			//This still not work
-			er := unpackEncryptionRequest(*pack) //从服务器接收EncryptionRequest
-			fmt.Println(er)
-			err = loginAuth(p.AsTk, p.Name, p.UUID, key, er) //向Mojang验证
-			if err != nil {
-				err = fmt.Errorf("login fail: %v", err)
-				return
-			}
-
-			var p *pk.Packet
-			p, err = genEncryptionKeyResponse(key, er.PublicKey, er.VerifyToken)
-			if err != nil {
-				err = fmt.Errorf("gen encryption key response fail: %v", err)
-				return
-			}
-			err = g.sendPacket(p) // Encryption Key Response
-			if err != nil {
-				return
-			}
-
-			g.reciver = bufio.NewReader(cipher.StreamReader{ //Set reciver for AES
-				S: decoStream,
-				R: g.conn,
-			})
-			g.sender = cipher.StreamWriter{
-				S: encoStream,
-				W: g.conn,
-			}
+			handleEncryptionRequest(g, pack, p)
 		case 0x02: //Login Success
-			// uuid, l := unpackString(pack.Data)
-			// UserName, _ := unpackString(pack.Data[l:])
+			// uuid, l := pk.UnpackString(pack.Data)
+			// name, _ := unpackString(pack.Data[l:])
 			fmt.Println("Login success")
 			return //switches the connection state to PLAY.
 		case 0x03: //Set Compression
@@ -159,5 +134,41 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 		case 0x04: //Login Plugin Request
 			fmt.Println("Waring Login Plugin Request")
 		}
+	}
+}
+
+// 加密请求
+func handleEncryptionRequest(g *Game, pack *pk.Packet, auth *Auth) {
+	//创建AES对称加密密钥
+	key, encoStream, decoStream := newSymmetricEncryption()
+
+	//解析EncryptionRequest包
+	er := unpackEncryptionRequest(*pack)
+	err := loginAuth(auth.AsTk, auth.Name, auth.UUID, key, er) //向Mojang验证
+	if err != nil {
+		err = fmt.Errorf("login fail: %v", err)
+		return
+	}
+
+	// 响应加密请求
+	var p *pk.Packet // Encryption Key Response
+	p, err = genEncryptionKeyResponse(key, er.PublicKey, er.VerifyToken)
+	if err != nil {
+		err = fmt.Errorf("gen encryption key response fail: %v", err)
+		return
+	}
+	err = g.sendPacket(p)
+	if err != nil {
+		return
+	}
+
+	//加密连接
+	g.reciver = bufio.NewReader(cipher.StreamReader{ //Set reciver for AES
+		S: decoStream,
+		R: g.conn,
+	})
+	g.sender = cipher.StreamWriter{
+		S: encoStream,
+		W: g.conn,
 	}
 }

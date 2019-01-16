@@ -104,6 +104,10 @@ func (g *Game) HandleGame() error {
 		default:
 			// fmt.Printf("ignore pack id %X\n", pack.ID)
 		}
+		// g.player.Yaw += 1
+		// if g.player.Yaw > 360 {
+		// 	g.player.Yaw -= 360
+		// }
 		sendPlayerLookPacket(g)
 	}
 }
@@ -146,7 +150,8 @@ func handleHeldItemPacket(g *Game, p *pk.Packet) {
 }
 
 func handleChunkDataPacket(g *Game, p *pk.Packet) {
-	unpackChunkDataPacket(p)
+	c, x, y := unpackChunkDataPacket(p, g.Info.Dimension == 0)
+	g.world.chunks[Location{x, y}] = c
 }
 
 func handlePlayerPositionAndLookPacket(g *Game, p *pk.Packet) {

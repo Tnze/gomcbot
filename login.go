@@ -95,8 +95,7 @@ type request struct {
 
 func loginAuth(AsTk, name, UUID string, shareSecret []byte, er encryptionRequest) error {
 	digest := AuthDigest(er.ServerID, shareSecret, er.PublicKey)
-	fmt.Println(digest)
-	//Post
+
 	client := http.Client{}
 	requestPacket, err := json.Marshal(
 		request{
@@ -111,8 +110,6 @@ func loginAuth(AsTk, name, UUID string, shareSecret []byte, er encryptionRequest
 	if err != nil {
 		return fmt.Errorf("create request packet to authenticate faile: %v", err)
 	}
-
-	fmt.Println(string(requestPacket))
 
 	PostRequest, err := http.NewRequest(http.MethodPost, "https://sessionserver.mojang.com/session/minecraft/join",
 		bytes.NewReader(requestPacket))

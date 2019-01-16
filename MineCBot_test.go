@@ -13,7 +13,7 @@ func TestPingAndList(t *testing.T) {
 	t.Log("Status:" + resp)
 }
 
-func TestJoinServer(t *testing.T) {
+func TestJoinServerOnline(t *testing.T) {
 	resp, err := authenticate.Authenticate("", "")
 	if err != nil {
 		t.Fatal(err)
@@ -22,6 +22,23 @@ func TestJoinServer(t *testing.T) {
 		Name: resp.SelectedProfile.Name,
 		UUID: resp.SelectedProfile.ID,
 		AsTk: resp.AccessToken,
+	}
+	g, err := p.JoinServer("localhost", 25565)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = g.HandleGame()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestJoinServerOffline(t *testing.T) {
+
+	p := Auth{
+		Name: "",
+		UUID: "",
+		AsTk: "",
 	}
 	g, err := p.JoinServer("localhost", 25565)
 	if err != nil {
