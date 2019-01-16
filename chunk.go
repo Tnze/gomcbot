@@ -2,7 +2,7 @@ package gomcbot
 
 import (
 	pk "./packet"
-	"fmt"
+	// "fmt"
 )
 
 func unpackChunkDataPacket(p *pk.Packet, hasSkyLight bool) (c *Chunk, x, y int) {
@@ -12,7 +12,7 @@ func unpackChunkDataPacket(p *pk.Packet, hasSkyLight bool) (c *Chunk, x, y int) 
 	X := pk.UnpackInt32(p.Data)
 	Y := pk.UnpackInt32(p.Data[4:])
 	index += 8
-	fmt.Println("Chunk: (", X, ", ", Y, ")") //Debug: Show Chunk loc
+	// fmt.Println("Chunk: (", X, ", ", Y, ")") //Debug: Show Chunk loc
 
 	FullChunk := p.Data[index] != 0x00
 	index++

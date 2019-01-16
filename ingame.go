@@ -9,11 +9,13 @@ import (
 type Player struct {
 	entityID int32
 	UUID     [2]int64 //128bit UUID
-	HeldItem int      //拿着的物品栏位
 
 	X, Y, Z    float64
 	Yaw, Pitch float32
 	OnGround   bool
+
+	HeldItem  int //拿着的物品栏位
+	Inventory []Solt
 }
 
 //EntityID get player's entity ID
@@ -101,6 +103,8 @@ func (g *Game) HandleGame() error {
 			handleEntityPacket(g, pack)
 		case 0x05:
 			handleSpawnPlayer(g, pack)
+		case 0x15:
+			//handleWindowItems(g, pack)
 		default:
 			// fmt.Printf("ignore pack id %X\n", pack.ID)
 		}
@@ -113,7 +117,6 @@ func (g *Game) HandleGame() error {
 }
 
 func handleJoinGamePacket(g *Game, p *pk.Packet) {
-	// https://wiki.vg/Protocol#Join_Game
 	g.Info.EntityID = int(pk.UnpackInt32(p.Data))
 	gamemode := p.Data[1]
 	g.Info.Gamemode = int(gamemode & 0x7)
@@ -151,7 +154,7 @@ func handleHeldItemPacket(g *Game, p *pk.Packet) {
 
 func handleChunkDataPacket(g *Game, p *pk.Packet) {
 	c, x, y := unpackChunkDataPacket(p, g.Info.Dimension == 0)
-	g.world.chunks[Location{x, y}] = c
+	g.world.chunks[ChunkLoc{x, y}] = c
 }
 
 func handlePlayerPositionAndLookPacket(g *Game, p *pk.Packet) {
@@ -282,6 +285,28 @@ func handleSpawnPlayer(g *Game, p *pk.Packet) {
 	g.world.Entities[np.entityID] = np //把该玩家添加到全局实体表里面
 }
 
+func handleWindowItems(g *Game, p *pk.Packet) {
+	index := 0
+
+	WindowID := p.Data[index]
+	index++
+
+	Count := pk.UnpackInt16(p.Data[index:])
+	index += 2
+
+	solts := make([]Solt, Count)
+	var len int
+	for i := int16(0); i < Count; i++ {
+		solts[i], len = unpackSolt(p.Data[index:])
+		index += len
+	}
+
+	switch WindowID {
+	case 0: //is player inventory
+		g.player.Inventory = solts
+	}
+}
+
 func sendTeleportConfirmPacket(g *Game, TeleportID int32) {
 	g.sendChan <- pk.Packet{
 		ID:   0x00,
@@ -321,4 +346,9 @@ func sendPlayerLookPacket(g *Game) {
 		ID:   0x12,
 		Data: data,
 	}
+}
+
+//GetWorld return the current World
+func (g *Game) GetWorld() World {
+	return g.world
 }

@@ -25,22 +25,6 @@ type Game struct {
 	world     World          //The Level
 }
 
-func (g *Game) recvPacket() (*pk.Packet, error) {
-	return pk.RecvPacket(g.reciver, g.threshold > 0)
-}
-
-func (g *Game) sendPacket(p *pk.Packet) error {
-	_, err := g.sender.Write(p.Pack(g.threshold))
-	return err
-}
-
-// Auth includes a account
-type Auth struct {
-	Name string
-	UUID string
-	AsTk string
-}
-
 // PingAndList chack server status and list online player
 func PingAndList(addr string, port int) (string, error) {
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", addr, port)) //连接
@@ -89,7 +73,7 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 	g.reciver = bufio.NewReader(g.conn)
 	g.sender = g.conn
 	g.world.Entities = make(map[int32]Entity)
-	g.world.chunks = make(map[Location]*Chunk)
+	g.world.chunks = make(map[ChunkLoc]*Chunk)
 
 	//握手
 	hsPacket := newHandshakePacket(404, addr, port, 2) //构造握手包
@@ -135,6 +119,22 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 			fmt.Println("Waring Login Plugin Request")
 		}
 	}
+}
+
+func (g *Game) recvPacket() (*pk.Packet, error) {
+	return pk.RecvPacket(g.reciver, g.threshold > 0)
+}
+
+func (g *Game) sendPacket(p *pk.Packet) error {
+	_, err := g.sender.Write(p.Pack(g.threshold))
+	return err
+}
+
+// Auth includes a account
+type Auth struct {
+	Name string
+	UUID string
+	AsTk string
 }
 
 // 加密请求
