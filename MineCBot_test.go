@@ -1,6 +1,7 @@
 package gomcbot
 
 import (
+	"./authenticate"
 	"testing"
 )
 
@@ -13,10 +14,14 @@ func TestPingAndList(t *testing.T) {
 }
 
 func TestJoinServer(t *testing.T) {
+	resp, err := authenticate.Authenticate("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
 	p := Auth{
-		Name: "Mi_Xi_Xi",
-		UUID: "ff7a038f-265c-4d42-b0cf-04c575896469",
-		AsTk: "",
+		Name: resp.SelectedProfile.Name,
+		UUID: resp.SelectedProfile.ID,
+		AsTk: resp.AccessToken,
 	}
 	g, err := p.JoinServer("localhost", 25565)
 	if err != nil {

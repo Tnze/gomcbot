@@ -119,15 +119,16 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 			err = fmt.Errorf("connect disconnected by server because: %s", s)
 			return
 		case 0x01: //Encryption Request
+			key, encoStream, decoStream := newSymmetricEncryption() //创建AES对称加密密钥
 			//This still not work
 			er := unpackEncryptionRequest(*pack) //从服务器接收EncryptionRequest
-			err = loginAuth(p.AsTk, p.UUID, er)  //向Mojang验证
+			fmt.Println(er)
+			err = loginAuth(p.AsTk, p.Name, p.UUID, key, er) //向Mojang验证
 			if err != nil {
-				err = fmt.Errorf("login auth fail: %v", err)
+				err = fmt.Errorf("login fail: %v", err)
 				return
 			}
 
-			key, encoStream, decoStream := newSymmetricEncryption()
 			var p *pk.Packet
 			p, err = genEncryptionKeyResponse(key, er.PublicKey, er.VerifyToken)
 			if err != nil {
@@ -150,7 +151,7 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 		case 0x02: //Login Success
 			// uuid, l := unpackString(pack.Data)
 			// UserName, _ := unpackString(pack.Data[l:])
-			// fmt.Println("Login success")
+			fmt.Println("Login success")
 			return //switches the connection state to PLAY.
 		case 0x03: //Set Compression
 			threshold, _ := pk.UnpackVarInt(pack.Data)

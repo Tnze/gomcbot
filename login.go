@@ -82,26 +82,38 @@ func twosComplement(p []byte) []byte {
 	return p
 }
 
-type request struct {
-	AccessToken     string `json:"accessToken"`
-	SelectedProfile string `json:"selectedProfile"`
-	ServerID        string `json:"serverId"`
+type profile struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
-func loginAuth(AsTk, UUID string, er encryptionRequest) error {
-	digest := AuthDigest(er.ServerID, er.VerifyToken, er.PublicKey)
+type request struct {
+	AccessToken     string  `json:"accessToken"`
+	SelectedProfile profile `json:"selectedProfile"`
+	ServerID        string  `json:"serverId"`
+}
+
+func loginAuth(AsTk, name, UUID string, shareSecret []byte, er encryptionRequest) error {
+	digest := AuthDigest(er.ServerID, shareSecret, er.PublicKey)
+	fmt.Println(digest)
 	//Post
 	client := http.Client{}
 	requestPacket, err := json.Marshal(
 		request{
-			AccessToken:     AsTk,
-			SelectedProfile: UUID,
-			ServerID:        digest,
+			AccessToken: AsTk,
+			SelectedProfile: profile{
+				ID:   UUID,
+				Name: name,
+			},
+			ServerID: digest,
 		},
 	)
 	if err != nil {
 		return fmt.Errorf("create request packet to authenticate faile: %v", err)
 	}
+
+	fmt.Println(string(requestPacket))
+
 	PostRequest, err := http.NewRequest(http.MethodPost, "https://sessionserver.mojang.com/session/minecraft/join",
 		bytes.NewReader(requestPacket))
 	if err != nil {
@@ -136,7 +148,6 @@ func newSymmetricEncryption() (key []byte, encoStream, decoStream cipher.Stream)
 	return
 }
 
-// 1024-bit RSA
 func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp *pk.Packet, err error) {
 
 	iPK, err := x509.ParsePKIXPublicKey(publicKey) // Decode Public Key

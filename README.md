@@ -41,7 +41,6 @@ func main() {
 ```
 
 ## Join a server
-> Note: gomcbot can't join a online-mode server currently. And I have no idea of why I can't pass the authenticate.
 ```go
 package main
 
