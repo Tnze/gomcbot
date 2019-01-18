@@ -1,7 +1,8 @@
 # GoMCbot
-A golang minecraft bot package
+A golang minecraft robot package
 
 # Usage
+There are some basic usage example. For more information, see [Wiki](https://github.com/Tnze/gomcbot/wiki).
 
 ## PingList a minecraft server
 
@@ -18,7 +19,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(resp)// for json format of resp see https://wiki.vg/Server_List_Ping#Response
+	// see format of resp at https://wiki.vg/Server_List_Ping#Response
+	fmt.Println(resp)
 }
 ```
 
