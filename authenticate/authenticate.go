@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	mb "github.com/Tnze/gomcbot"
 	"io/ioutil"
 	"net/http"
-	// "strings"
 )
 
 // Agent is a struct of auth
@@ -102,4 +102,13 @@ type Response struct {
 			Value string `json:"value"`
 		}
 	} `json:"user"`
+}
+
+//ToAuth convert Response to github.com/Tnze/gomcbot.Auth
+func (r *Response) ToAuth() mb.Auth {
+	return mb.Auth{
+		Name: r.SelectedProfile.Name,
+		UUID: r.SelectedProfile.ID,
+		AsTk: r.AccessToken,
+	}
 }

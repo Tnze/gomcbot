@@ -1,7 +1,6 @@
 package gomcbot
 
 import (
-	"github.com/Tnze/gomcbot/authenticate"
 	"testing"
 )
 
@@ -13,31 +12,10 @@ func TestPingAndList(t *testing.T) {
 	t.Log("Status:" + resp)
 }
 
-func TestJoinServer(t *testing.T) {
-	resp, err := authenticate.Authenticate("", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := Auth{
-		Name: resp.SelectedProfile.Name,
-		UUID: resp.SelectedProfile.ID,
-		AsTk: resp.AccessToken,
-	}
-	g, err := p.JoinServer("localhost", 25565)
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = g.HandleGame()
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestJoinServerOffline(t *testing.T) {
-
 	p := Auth{
-		Name: "",
-		UUID: "",
+		Name: "Mi_Xi_Xi",
+		UUID: "ff7a038f265c4d42b0cf04c575896469",
 		AsTk: "",
 	}
 	g, err := p.JoinServer("localhost", 25565)
