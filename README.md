@@ -60,15 +60,20 @@ func main() {
 	Auth := resp.ToAuth()
 
 	//Join server
-	g, err := Auth.JoinServer("localhost", 25565)
+	game, err := Auth.JoinServer("localhost", 25565)
 	if err != nil {
 		panic(err)
 	}
 
 	//Handle game
-	err = g.HandleGame()
-	if err != nil {
-		panic(err)
+	events := game.GetEvents()
+	go game.HandleGame()
+
+	for e := range events {//Reciving events
+		switch e {
+		case mb.PlayerSpawnEvent:
+			fmt.Println("Player is spawn!")
+		}
 	}
 }
 
@@ -92,10 +97,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	
-	err = game.HandleGame()
-	if err != nil {
-		panic(err)
+	events := game.GetEvents()
+
+	go game.HandleGame()
+	for e := range events {
+		switch e {
+		case mb.PlayerSpawnEvent:
+			fmt.Println("Player is spawn!")
+		}
 	}
 }
 ```

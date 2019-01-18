@@ -113,7 +113,7 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 		case 0x02: //Login Success
 			// uuid, l := pk.UnpackString(pack.Data)
 			// name, _ := unpackString(pack.Data[l:])
-			fmt.Println("Login success")
+			g.events <- LoginSuccessEvent
 			return //switches the connection state to PLAY.
 		case 0x03: //Set Compression
 			threshold, _ := pk.UnpackVarInt(bytes.NewReader(pack.Data))

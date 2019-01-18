@@ -260,6 +260,7 @@ func handlePlayerPositionAndLookPacket(g *Game, r *bytes.Reader) error {
 	//handle PlayerSpawnEvent
 	if !isSpawn {
 		g.events <- PlayerSpawnEvent
+		isSpawn = true
 	}
 	return nil
 }
@@ -476,7 +477,6 @@ func sendKeepAlivePacket(g *Game, KeepAliveID int64) {
 		ID:   0x0E,
 		Data: pk.PackUint64(uint64(KeepAliveID)),
 	}
-	fmt.Println("Keep Alive")
 }
 
 func sendPlayerLookPacket(g *Game) {
