@@ -66,6 +66,7 @@ func (g *Game) HandleGame() error {
 			}
 		}
 	}()
+
 	for {
 		pack, err := g.recvPacket()
 		if err != nil {

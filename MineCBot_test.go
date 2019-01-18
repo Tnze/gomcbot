@@ -1,6 +1,7 @@
 package gomcbot
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -22,8 +23,10 @@ func TestJoinServerOffline(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = g.HandleGame()
-	if err != nil {
-		t.Fatal(err)
+	fmt.Println("Login success")
+	events := g.GetEvents()
+	go g.HandleGame()
+	for e := range events {
+		fmt.Println(e)
 	}
 }

@@ -9,7 +9,6 @@ type Event int
 */
 const (
 	DisconnectEvent Event = iota
-	LoginSuccessEvent
 	PlayerSpawnEvent
 )
 
