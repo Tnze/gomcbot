@@ -40,25 +40,57 @@ func main() {
 }
 ```
 
-## Join a server
+## Join a server (online)
 ```go
 package main
 
 import (
-	"fmt"
-	gmcb "github.com/Tnze/gomcbot"
+	// mb "github.com/Tnze/gomcbot"
+	auth "github.com/Tnze/gomcbot/authenticate"
 )
 
 func main() {
-	p := Auth{
-		Name: "Mi_Xi_Xi",
-		UUID: "ff7a038f-265c-4d42-b0cf-04c575896469",
-		AsTk: "",
+	//Login
+	resp, err := auth.Authenticate("email", "password")
+	if err != nil {
+		panic(err)
 	}
+	Auth := resp.ToAuth()
+
+	//Join server
+	g, err := Auth.JoinServer("localhost", 25565)
+	if err != nil {
+		panic(err)
+	}
+
+	//Handle game
+	err = g.HandleGame()
+	if err != nil {
+		panic(err)
+	}
+}
+
+```
+
+## Join a server (offline)
+```go
+package main
+
+import (
+	mb "github.com/Tnze/gomcbot"
+)
+
+func main() {
+	p := mb.Auth{
+		Name: "YourGameName",
+		UUID: "YourUUID",
+	}
+
 	game, err := p.JoinServer("localhost", 25565)
 	if err != nil {
 		panic(err)
 	}
+	
 	err = game.HandleGame()
 	if err != nil {
 		panic(err)
