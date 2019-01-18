@@ -10,6 +10,7 @@ type Event int
 const (
 	DisconnectEvent Event = iota
 	PlayerSpawnEvent
+	PlayerDeadEvent
 )
 
 // GetEvents returns a int type channal.

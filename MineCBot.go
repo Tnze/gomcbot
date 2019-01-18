@@ -22,9 +22,11 @@ type Game struct {
 	abilities PlayerAbilities
 	settings  Settings
 	player    Player
-	sendChan  chan pk.Packet //be used when HandleGame
-	world     World          //The Level
+	world     World           //the map data
+	sendChan  chan pk.Packet  //be used when HandleGame
+	recvChan  chan *pk.Packet //be used when HandleGame
 	events    chan Event
+	motion    chan func() //used by motion method to update player's positon
 }
 
 // PingAndList chack server status and list online player
@@ -76,7 +78,8 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 	g.sender = g.conn
 	g.world.Entities = make(map[int32]Entity)
 	g.world.chunks = make(map[ChunkLoc]*Chunk)
-	g.events = make(chan Event) //events是一个无缓冲通道
+	g.events = make(chan Event)
+	g.motion = make(chan func())
 
 	//握手
 	hsPacket := newHandshakePacket(404, addr, port, 2) //构造握手包
