@@ -127,46 +127,79 @@ func PackBoolean(b bool) byte {
 
 }
 
-//UnpackString 读取一个字符串
-func UnpackString(b []byte) (s string, len int) {
-	l, pre := UnpackVarInt(b)
-	len = int(l)
-	return string(b[pre : pre+len]), len + pre
-}
-
-//UnpackVarInt 读取一个VarInt
-func UnpackVarInt(b []byte) (num int32, len int) {
-	var n uint
-	for i := 0; i < 5; i++ { //读数据前的长度标记
-		n |= (uint(b[i]&0x7F) << uint(7*i))
-		len++
-		if b[i]&0x80 == 0 {
-			break
+func ReadNBytes(b *bytes.Reader, n int) (bs []byte, err error) {
+	bs = make([]byte, n)
+	for i := 0; i < n; i++ {
+		bs[i], err = b.ReadByte()
+		if err != nil {
+			return
 		}
 	}
-	num = int32(n) //这里要把超过int32的负数溢出
 	return
 }
 
+//UnpackString 读取一个字符串
+func UnpackString(b *bytes.Reader) (s string, err error) {
+	l, err := UnpackVarInt(b)
+	if err != nil {
+		return "", err
+	}
+
+	bs, err := ReadNBytes(b, int(l))
+
+	return string(bs), err
+}
+
+//UnpackVarInt 读取一个VarInt
+func UnpackVarInt(b *bytes.Reader) (int32, error) {
+	var n uint
+	for i := 0; i < 5; i++ { //读数据前的长度标记
+		sec, err := b.ReadByte()
+		if err != nil {
+			return 0, err
+		}
+
+		n |= (uint(sec&0x7F) << uint(7*i))
+
+		if sec&0x80 == 0 {
+			break
+		}
+	}
+	return int32(n), nil //这里要把超过int32的负数溢出
+}
+
 //UnpackInt16 读取一个16位有符号整数
-func UnpackInt16(b []byte) (num int16) {
-	return int16(b[0])<<8 | int16(b[1])
+func UnpackInt16(b *bytes.Reader) (int16, error) {
+	bs, err := ReadNBytes(b, 2)
+	if err != nil {
+		return 0, err
+	}
+	return int16(bs[0])<<8 | int16(bs[1]), nil
 }
 
 //UnpackInt32 读取一个32位有符号整数
-func UnpackInt32(b []byte) (num int32) {
-	return int32(b[0])<<24 | int32(b[1])<<16 | int32(b[2])<<8 | int32(b[3])
+func UnpackInt32(b *bytes.Reader) (int32, error) {
+	bs, err := ReadNBytes(b, 4)
+	if err != nil {
+		return 0, err
+	}
+	return int32(bs[0])<<24 | int32(bs[1])<<16 | int32(bs[2])<<8 | int32(bs[3]), nil
 }
 
 //UnpackInt64 读取一个64位有符号整数
-func UnpackInt64(b []byte) (num int64) {
-	return int64(b[0])<<56 | int64(b[1])<<48 | int64(b[2])<<40 | int64(b[3])<<32 |
-		int64(b[4])<<24 | int64(b[5])<<16 | int64(b[6])<<8 | int64(b[7])
+func UnpackInt64(b *bytes.Reader) (int64, error) {
+	bs, err := ReadNBytes(b, 8)
+	if err != nil {
+		return 0, err
+	}
+	return int64(bs[0])<<56 | int64(bs[1])<<48 | int64(bs[2])<<40 | int64(bs[3])<<32 |
+		int64(bs[4])<<24 | int64(bs[5])<<16 | int64(bs[6])<<8 | int64(bs[7]), nil
 }
 
 // UnpackPosition 读取一个位置
-func UnpackPosition(b []byte) (x, y, z int) {
-	position := UnpackInt64(b)
+func UnpackPosition(b *bytes.Reader) (x, y, z int, err error) {
+	position, err := UnpackInt64(b)
+
 	x = int(position >> 38)
 	y = int((position >> 26) & 0xFFF)
 	z = int(position << 38 >> 38)
@@ -185,15 +218,15 @@ func UnpackPosition(b []byte) (x, y, z int) {
 }
 
 // UnpackFloat 读取一个单精度浮点数
-func UnpackFloat(b []byte) (num float32) {
-	n := UnpackInt32(b)
-	return *(*float32)(unsafe.Pointer(&n))
+func UnpackFloat(b *bytes.Reader) (float32, error) {
+	n, err := UnpackInt32(b)
+	return *(*float32)(unsafe.Pointer(&n)), err
 }
 
 // UnpackDouble 读取一个双精度浮点数
-func UnpackDouble(b []byte) (num float64) {
-	n := UnpackInt64(b)
-	return *(*float64)(unsafe.Pointer(&n))
+func UnpackDouble(b *bytes.Reader) (float64, error) {
+	n, err := UnpackInt64(b)
+	return *(*float64)(unsafe.Pointer(&n)), err
 }
 
 // RecvPacket recive a packet from server
@@ -231,12 +264,15 @@ func RecvPacket(s *bufio.Reader, useZlib bool) (*Packet, error) {
 
 // UnCompress 读取一个压缩的包
 func UnCompress(data []byte) (*Packet, error) {
-	sizeUncompressed, len := UnpackVarInt(data)
+	reader := bytes.NewReader(data)
+	sizeUncompressed, err := UnpackVarInt(reader)
+	if err != nil {
+		return nil, err
+	}
+
 	uncompressData := make([]byte, sizeUncompressed)
 	if sizeUncompressed != 0 { // != 0 means compressed, let's decompress
-		b := bytes.NewReader(data[len:])
-
-		r, err := zlib.NewReader(b)
+		r, err := zlib.NewReader(reader)
 
 		if err != nil {
 			return nil, fmt.Errorf("decompress fail: %v", err)
@@ -247,7 +283,7 @@ func UnCompress(data []byte) (*Packet, error) {
 		}
 		r.Close()
 	} else {
-		uncompressData = data[len:]
+		uncompressData = data[1:]
 	}
 	return &Packet{
 		ID:   uncompressData[0],

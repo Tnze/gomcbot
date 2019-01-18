@@ -3,6 +3,7 @@ package gomcbot
 import (
 	pk "./packet"
 	"bufio"
+	"bytes"
 	"crypto/cipher"
 	"fmt"
 	"io"
@@ -54,7 +55,7 @@ func PingAndList(addr string, port int) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("recv list packect fail: %v", err)
 	}
-	s, _ := pk.UnpackString(recv.Data)
+	s, _ := pk.UnpackString(bytes.NewReader(recv.Data))
 	return string(s), nil
 }
 
@@ -102,7 +103,7 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 		//Handle Packet
 		switch pack.ID {
 		case 0x00: //Disconnect
-			s, _ := pk.UnpackString(pack.Data)
+			s, _ := pk.UnpackString(bytes.NewReader(pack.Data))
 			err = fmt.Errorf("connect disconnected by server because: %s", s)
 			return
 		case 0x01: //Encryption Request
@@ -113,7 +114,7 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 			fmt.Println("Login success")
 			return //switches the connection state to PLAY.
 		case 0x03: //Set Compression
-			threshold, _ := pk.UnpackVarInt(pack.Data)
+			threshold, _ := pk.UnpackVarInt(bytes.NewReader(pack.Data))
 			g.threshold = int(threshold)
 		case 0x04: //Login Plugin Request
 			fmt.Println("Waring Login Plugin Request")
@@ -138,28 +139,29 @@ type Auth struct {
 }
 
 // 加密请求
-func handleEncryptionRequest(g *Game, pack *pk.Packet, auth *Auth) {
+func handleEncryptionRequest(g *Game, pack *pk.Packet, auth *Auth) error {
 	//创建AES对称加密密钥
 	key, encoStream, decoStream := newSymmetricEncryption()
 
 	//解析EncryptionRequest包
-	er := unpackEncryptionRequest(*pack)
-	err := loginAuth(auth.AsTk, auth.Name, auth.UUID, key, er) //向Mojang验证
+	er, err := unpackEncryptionRequest(*pack)
 	if err != nil {
-		err = fmt.Errorf("login fail: %v", err)
-		return
+		return err
+	}
+	err = loginAuth(auth.AsTk, auth.Name, auth.UUID, key, *er) //向Mojang验证
+	if err != nil {
+		return fmt.Errorf("login fail: %v", err)
 	}
 
 	// 响应加密请求
 	var p *pk.Packet // Encryption Key Response
 	p, err = genEncryptionKeyResponse(key, er.PublicKey, er.VerifyToken)
 	if err != nil {
-		err = fmt.Errorf("gen encryption key response fail: %v", err)
-		return
+		return fmt.Errorf("gen encryption key response fail: %v", err)
 	}
 	err = g.sendPacket(p)
 	if err != nil {
-		return
+		return err
 	}
 
 	//加密连接
@@ -171,4 +173,5 @@ func handleEncryptionRequest(g *Game, pack *pk.Packet, auth *Auth) {
 		S: encoStream,
 		W: g.conn,
 	}
+	return nil
 }

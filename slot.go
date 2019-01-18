@@ -2,7 +2,7 @@ package gomcbot
 
 import (
 	pk "./packet"
-	// "bytes"
+	"bytes"
 	// "github.com/Nightgunner5/go.nbt"
 )
 
@@ -15,14 +15,23 @@ type Solt struct {
 type soltNBT struct {
 }
 
-func unpackSolt(b []byte) (Solt, int) {
+func unpackSolt(b *bytes.Reader) (Solt, error) {
 	index := 0
-	Present := b[index] != 0x00
+	p, err := b.ReadByte()
+	if err != nil {
+		return Solt{}, err
+	}
+	Present := p != 0x00
 	index++
 	if Present {
-		itemID, len := pk.UnpackVarInt(b[index:])
-		index += len
-		count := b[index]
+		itemID, err := pk.UnpackVarInt(b)
+		if err != nil {
+			return Solt{}, err
+		}
+		count, err := b.ReadByte()
+		if err != nil {
+			return Solt{}, err
+		}
 		index++
 
 		//nbt.Unmarshal(nbt.Uncompressed)
@@ -30,7 +39,7 @@ func unpackSolt(b []byte) (Solt, int) {
 		return Solt{
 			ID:    int(itemID),
 			Count: count,
-		}, index
+		}, nil
 	}
-	return Solt{}, index
+	return Solt{}, nil
 }

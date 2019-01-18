@@ -2,6 +2,7 @@ package gomcbot
 
 import (
 	pk "./packet"
+	"bytes"
 	"fmt"
 )
 
@@ -68,41 +69,43 @@ func (g *Game) HandleGame() error {
 			return fmt.Errorf("recv packet in game fail: %v", err)
 		}
 
+		reader := bytes.NewReader(pack.Data)
+
 		switch pack.ID {
 		case 0x25:
-			handleJoinGamePacket(g, pack)
+			handleJoinGamePacket(g, reader)
 		case 0x19:
-			handlePluginPacket(g, pack)
+			handlePluginPacket(g, reader)
 		case 0x0D:
-			handleServerDifficultyPacket(g, pack)
+			handleServerDifficultyPacket(g, reader)
 		case 0x49:
-			handleSpawnPositionPacket(g, pack)
+			handleSpawnPositionPacket(g, reader)
 		case 0x2E:
-			handlePlayerAbilitiesPacket(g, pack)
+			handlePlayerAbilitiesPacket(g, reader)
 			g.sendChan <- *g.settings.pack()
 		case 0x3D:
-			handleHeldItemPacket(g, pack)
+			handleHeldItemPacket(g, reader)
 		case 0x22:
 			handleChunkDataPacket(g, pack)
 		case 0x32:
-			handlePlayerPositionAndLookPacket(g, pack)
+			handlePlayerPositionAndLookPacket(g, reader)
 			fmt.Println("Pos: ", g.player.X, g.player.Y, g.player.Z)
 			sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
 			fmt.Println("Send PositionAndLookPacket")
 		case 0x54:
-			handleDeclareRecipesPacket(g, pack)
+			handleDeclareRecipesPacket(g, reader)
 		case 0x29:
-			handleEntityLookAndRelativeMove(g, pack)
+			handleEntityLookAndRelativeMove(g, reader)
 		case 0x39:
-			handleEntityHeadLook(g, pack)
+			handleEntityHeadLook(g, reader)
 		case 0x28:
-			handleEntityRelativeMovePacket(g, pack)
+			handleEntityRelativeMovePacket(g, reader)
 		case 0x21:
-			handleKeepAlivePacket(g, pack)
+			handleKeepAlivePacket(g, reader)
 		case 0x27:
-			handleEntityPacket(g, pack)
+			handleEntityPacket(g, reader)
 		case 0x05:
-			handleSpawnPlayer(g, pack)
+			handleSpawnPlayer(g, reader)
 		case 0x15:
 			//handleWindowItems(g, pack)
 		default:
@@ -116,55 +119,115 @@ func (g *Game) HandleGame() error {
 	}
 }
 
-func handleJoinGamePacket(g *Game, p *pk.Packet) {
-	g.Info.EntityID = int(pk.UnpackInt32(p.Data))
-	gamemode := p.Data[1]
+func handleJoinGamePacket(g *Game, r *bytes.Reader) error {
+	eid, err := pk.UnpackInt32(r)
+	if err != nil {
+		return err
+	}
+	g.Info.EntityID = int(eid)
+	gamemode, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
 	g.Info.Gamemode = int(gamemode & 0x7)
 	g.Info.Hardcore = gamemode&0x8 != 0
-	g.Info.Dimension = int(pk.UnpackInt32(p.Data[5:]))
-	g.Info.Difficulty = int(p.Data[9])
+	dimension, err := pk.UnpackInt32(r)
+	if err != nil {
+		return err
+	}
+	g.Info.Dimension = int(dimension)
+	difficulty, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	g.Info.Difficulty = int(difficulty)
 	// ignore Max Players
-	var ltlen int
-	g.Info.LevelType, ltlen = pk.UnpackString(p.Data[11:])
-	g.Info.ReducedDebugInfo = p.Data[11+ltlen] != 0x00
+	g.Info.LevelType, err = pk.UnpackString(r)
+	if err != nil {
+		return err
+	}
+	rdi, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	g.Info.ReducedDebugInfo = rdi != 0x00
+	return nil
 }
 
-func handlePluginPacket(g *Game, p *pk.Packet) {
+func handlePluginPacket(g *Game, r *bytes.Reader) {
 	// fmt.Println("Plugin Packet: ", p)
 }
 
-func handleServerDifficultyPacket(g *Game, p *pk.Packet) {
-	g.Info.Difficulty = int(p.Data[0])
+func handleServerDifficultyPacket(g *Game, r *bytes.Reader) error {
+	diff, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	g.Info.Difficulty = int(diff)
+	return nil
 }
 
-func handleSpawnPositionPacket(g *Game, p *pk.Packet) {
-	g.Info.SpawnPosition.X, g.Info.SpawnPosition.Y, g.Info.SpawnPosition.Z =
-		pk.UnpackPosition(p.Data)
+func handleSpawnPositionPacket(g *Game, r *bytes.Reader) (err error) {
+	g.Info.SpawnPosition.X, g.Info.SpawnPosition.Y, g.Info.SpawnPosition.Z, err =
+		pk.UnpackPosition(r)
+	return
 }
 
-func handlePlayerAbilitiesPacket(g *Game, p *pk.Packet) {
-	g.abilities.Flags = int8(p.Data[0])
-	g.abilities.FlyingSpeed = pk.UnpackFloat(p.Data[1:])
-	g.abilities.FieldofViewModifier = pk.UnpackFloat(p.Data[5:])
+func handlePlayerAbilitiesPacket(g *Game, r *bytes.Reader) error {
+	f, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	g.abilities.Flags = int8(f)
+	g.abilities.FlyingSpeed, err = pk.UnpackFloat(r)
+	if err != nil {
+		return err
+	}
+	g.abilities.FieldofViewModifier, err = pk.UnpackFloat(r)
+	return err
 }
 
-func handleHeldItemPacket(g *Game, p *pk.Packet) {
-	g.player.HeldItem = int(p.Data[0])
+func handleHeldItemPacket(g *Game, r *bytes.Reader) error {
+	hi, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	g.player.HeldItem = int(hi)
+	return nil
 }
 
-func handleChunkDataPacket(g *Game, p *pk.Packet) {
-	c, x, y := unpackChunkDataPacket(p, g.Info.Dimension == 0)
+func handleChunkDataPacket(g *Game, p *pk.Packet) error {
+	c, x, y, err := unpackChunkDataPacket(p, g.Info.Dimension == 0)
 	g.world.chunks[ChunkLoc{x, y}] = c
+	return err
 }
 
-func handlePlayerPositionAndLookPacket(g *Game, p *pk.Packet) {
-	x := pk.UnpackDouble(p.Data)
-	y := pk.UnpackDouble(p.Data[8:])
-	z := pk.UnpackDouble(p.Data[16:])
-	yaw := pk.UnpackFloat(p.Data[24:])
-	pitch := pk.UnpackFloat(p.Data[28:])
+func handlePlayerPositionAndLookPacket(g *Game, r *bytes.Reader) error {
+	x, err := pk.UnpackDouble(r)
+	if err != nil {
+		return err
+	}
+	y, err := pk.UnpackDouble(r)
+	if err != nil {
+		return err
+	}
+	z, err := pk.UnpackDouble(r)
+	if err != nil {
+		return err
+	}
+	yaw, err := pk.UnpackFloat(r)
+	if err != nil {
+		return err
+	}
+	pitch, err := pk.UnpackFloat(r)
+	if err != nil {
+		return err
+	}
 
-	flags := p.Data[32]
+	flags, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
 
 	if flags&0x01 == 0 {
 		g.player.X = x
@@ -192,11 +255,12 @@ func handlePlayerPositionAndLookPacket(g *Game, p *pk.Packet) {
 		g.player.Pitch += pitch
 	}
 	//confirm this packet with Teleport Confirm
-	TeleportID, _ := pk.UnpackVarInt(p.Data[33:])
+	TeleportID, _ := pk.UnpackVarInt(r)
 	sendTeleportConfirmPacket(g, TeleportID)
+	return nil
 }
 
-func handleDeclareRecipesPacket(g *Game, p *pk.Packet) {
+func handleDeclareRecipesPacket(g *Game, r *bytes.Reader) {
 	//Ignore Declare Recipes Packet
 
 	// NumRecipes, index := pk.UnpackVarInt(p.Data)
@@ -211,100 +275,174 @@ func handleDeclareRecipesPacket(g *Game, p *pk.Packet) {
 	// }
 }
 
-func handleEntityLookAndRelativeMove(g *Game, p *pk.Packet) {
-	ID, index := pk.UnpackVarInt(p.Data)
+func handleEntityLookAndRelativeMove(g *Game, r *bytes.Reader) error {
+	ID, err := pk.UnpackVarInt(r)
+	if err != nil {
+		return err
+	}
 	E := g.world.Entities[ID]
 	if E != nil {
 		P, ok := E.(*Player)
 		if !ok {
-			return
+			return nil
 		}
-		DeltaX := pk.UnpackInt16(p.Data[index:])
-		DeltaY := pk.UnpackInt16(p.Data[index+2:])
-		DeltaZ := pk.UnpackInt16(p.Data[index+4:])
-		index += 3 * 2
-		P.Yaw += float32(p.Data[index]) * (1.0 / 256)
-		P.Pitch += float32(p.Data[index+1]) * (1.0 / 256)
-		index += 2
-		P.OnGround = p.Data[index] != 0x00
+		DeltaX, err := pk.UnpackInt16(r)
+		if err != nil {
+			return err
+		}
+		DeltaY, err := pk.UnpackInt16(r)
+		if err != nil {
+			return err
+		}
+		DeltaZ, err := pk.UnpackInt16(r)
+		if err != nil {
+			return err
+		}
+
+		yaw, err := r.ReadByte()
+		if err != nil {
+			return err
+		}
+
+		pitch, err := r.ReadByte()
+		if err != nil {
+			return err
+		}
+		P.Yaw += float32(yaw) * (1.0 / 256)
+		P.Pitch += float32(pitch) * (1.0 / 256)
+
+		og, err := r.ReadByte()
+		if err != nil {
+			return err
+		}
+		P.OnGround = og != 0x00
 
 		P.X += float64(DeltaX) / 128
 		P.Y += float64(DeltaY) / 128
 		P.Z += float64(DeltaZ) / 128
 	}
+	return nil
 }
 
-func handleEntityHeadLook(g *Game, p *pk.Packet) {
+func handleEntityHeadLook(g *Game, r *bytes.Reader) {
 
 }
 
-func handleEntityRelativeMovePacket(g *Game, p *pk.Packet) {
-	ID, index := pk.UnpackVarInt(p.Data)
+func handleEntityRelativeMovePacket(g *Game, r *bytes.Reader) error {
+	ID, err := pk.UnpackVarInt(r)
+	if err != nil {
+		return err
+	}
 	E := g.world.Entities[ID]
 	if E != nil {
 		P, ok := E.(*Player)
 		if !ok {
-			return
+			return nil
 		}
-		DeltaX := pk.UnpackInt16(p.Data[index:])
-		DeltaY := pk.UnpackInt16(p.Data[index+2:])
-		DeltaZ := pk.UnpackInt16(p.Data[index+4:])
-		index += 3 * 2
-		P.OnGround = p.Data[index] != 0x00
+		DeltaX, err := pk.UnpackInt16(r)
+		if err != nil {
+			return err
+		}
+		DeltaY, err := pk.UnpackInt16(r)
+		if err != nil {
+			return err
+		}
+		DeltaZ, err := pk.UnpackInt16(r)
+		if err != nil {
+			return err
+		}
+
+		og, err := r.ReadByte()
+		if err != nil {
+			return err
+		}
+		P.OnGround = og != 0x00
 
 		P.X += float64(DeltaX) / 128
 		P.Y += float64(DeltaY) / 128
 		P.Z += float64(DeltaZ) / 128
 	}
+	return nil
 }
 
-func handleKeepAlivePacket(g *Game, p *pk.Packet) {
-	KeepAliveID := pk.UnpackInt64(p.Data)
+func handleKeepAlivePacket(g *Game, r *bytes.Reader) (err error) {
+	KeepAliveID, err := pk.UnpackInt64(r)
 	sendKeepAlivePacket(g, KeepAliveID)
+	return
 }
 
-func handleEntityPacket(g *Game, p *pk.Packet) {
+func handleEntityPacket(g *Game, r *bytes.Reader) {
 	// initialize an entity.
 }
 
-func handleSpawnPlayer(g *Game, p *pk.Packet) {
+func handleSpawnPlayer(g *Game, r *bytes.Reader) (err error) {
 	np := new(Player)
-	var index int
-	np.entityID, index = pk.UnpackVarInt(p.Data[index:])
-	np.UUID[0] = pk.UnpackInt64(p.Data[index:])
-	np.UUID[1] = pk.UnpackInt64(p.Data[index+8:])
-	index += 16
-	np.X = pk.UnpackDouble(p.Data[index:])
-	np.Y = pk.UnpackDouble(p.Data[index+8:])
-	np.Z = pk.UnpackDouble(p.Data[index+16:])
-	index += 3 * 8
-	np.Yaw = float32(p.Data[index]) * (1.0 / 256)
-	np.Pitch = float32(p.Data[index+1]) * (1.0 / 256)
-	index += 2
+	np.entityID, err = pk.UnpackVarInt(r)
+	if err != nil {
+		return
+	}
+	np.UUID[0], err = pk.UnpackInt64(r)
+	if err != nil {
+		return
+	}
+	np.UUID[1], err = pk.UnpackInt64(r)
+	if err != nil {
+		return
+	}
+	np.X, err = pk.UnpackDouble(r)
+	if err != nil {
+		return
+	}
+	np.Y, err = pk.UnpackDouble(r)
+	if err != nil {
+		return
+	}
+	np.Z, err = pk.UnpackDouble(r)
+	if err != nil {
+		return
+	}
+
+	yaw, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	pitch, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+
+	np.Yaw = float32(yaw) * (1.0 / 256)
+	np.Pitch = float32(pitch) * (1.0 / 256)
 
 	g.world.Entities[np.entityID] = np //把该玩家添加到全局实体表里面
+	return nil
 }
 
-func handleWindowItems(g *Game, p *pk.Packet) {
-	index := 0
+func handleWindowItems(g *Game, r *bytes.Reader) (err error) {
+	WindowID, err := r.ReadByte()
+	if err != nil {
+		return
+	}
 
-	WindowID := p.Data[index]
-	index++
-
-	Count := pk.UnpackInt16(p.Data[index:])
-	index += 2
+	Count, err := pk.UnpackInt16(r)
+	if err != nil {
+		return
+	}
 
 	solts := make([]Solt, Count)
-	var len int
 	for i := int16(0); i < Count; i++ {
-		solts[i], len = unpackSolt(p.Data[index:])
-		index += len
+		solts[i], err = unpackSolt(r)
+		if err != nil {
+			return
+		}
 	}
 
 	switch WindowID {
 	case 0: //is player inventory
 		g.player.Inventory = solts
 	}
+	return nil
 }
 
 func sendTeleportConfirmPacket(g *Game, TeleportID int32) {

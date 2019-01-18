@@ -23,22 +23,35 @@ type encryptionRequest struct {
 	VerifyToken []byte
 }
 
-func unpackEncryptionRequest(p pk.Packet) (er encryptionRequest) {
-	i := 0
-	serverID, length := pk.UnpackString(p.Data[i:])
-	i += length
-	publicKeyLength, length := pk.UnpackVarInt(p.Data[i:])
-	i += length
-	publicKey := p.Data[i : i+int(publicKeyLength)]
-	i += int(publicKeyLength)
-	verifyTokenLength, length := pk.UnpackVarInt(p.Data[i:])
-	i += length
-	verifyToken := p.Data[i : i+int(verifyTokenLength)]
-	return encryptionRequest{
+func unpackEncryptionRequest(p pk.Packet) (*encryptionRequest, error) {
+	r := bytes.NewReader(p.Data)
+	serverID, err := pk.UnpackString(r)
+	if err != nil {
+		return nil, err
+	}
+	publicKeyLength, err := pk.UnpackVarInt(r)
+	if err != nil {
+		return nil, err
+	}
+	publicKey, err := pk.ReadNBytes(r, int(publicKeyLength))
+	if err != nil {
+		return nil, err
+	}
+	verifyTokenLength, err := pk.UnpackVarInt(r)
+	if err != nil {
+		return nil, err
+	}
+	verifyToken, err := pk.ReadNBytes(r, int(verifyTokenLength))
+	if err != nil {
+		return nil, err
+	}
+
+	er := encryptionRequest{
 		ServerID:    serverID,
 		PublicKey:   publicKey,
 		VerifyToken: verifyToken,
 	}
+	return &er, nil
 }
 
 // AuthDigest computes a special SHA-1 digest required for Minecraft web

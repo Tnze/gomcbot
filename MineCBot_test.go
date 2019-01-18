@@ -13,7 +13,7 @@ func TestPingAndList(t *testing.T) {
 	t.Log("Status:" + resp)
 }
 
-func TestJoinServerOnline(t *testing.T) {
+func TestJoinServer(t *testing.T) {
 	resp, err := authenticate.Authenticate("", "")
 	if err != nil {
 		t.Fatal(err)
