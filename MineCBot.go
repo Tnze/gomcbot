@@ -24,7 +24,7 @@ type Game struct {
 	player    Player
 	sendChan  chan pk.Packet //be used when HandleGame
 	world     World          //The Level
-	events    chan int
+	events    chan Event
 }
 
 // PingAndList chack server status and list online player
@@ -76,7 +76,7 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 	g.sender = g.conn
 	g.world.Entities = make(map[int32]Entity)
 	g.world.chunks = make(map[ChunkLoc]*Chunk)
-	g.events = make(chan int) //Events是一个无缓冲通道
+	g.events = make(chan Event) //events是一个无缓冲通道
 
 	//握手
 	hsPacket := newHandshakePacket(404, addr, port, 2) //构造握手包

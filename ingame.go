@@ -55,6 +55,7 @@ func (g *Game) HandleGame() error {
 		g.events <- DisconnectEvent
 		close(g.events)
 	}()
+
 	g.sendChan = make(chan pk.Packet, 64)
 	go func() {
 		for {
