@@ -12,24 +12,21 @@ type Settings struct {
 	MainHand           int    //主手
 }
 
-// Cape enabled
+/*
+	Used by Settings.DisplayedSkinParts.
+	For each bits set if shows match part.
+*/
 const (
 	_ = 1 << iota
-	// Jacket 衣服
 	Jacket
-	// LeftSleeve 左袖子
 	LeftSleeve
-	// RightSleeve 右袖子
 	RightSleeve
-	// LeftPantsLeg 左裤子
 	LeftPantsLeg
-	// RightPantsLeg 右裤子
 	RightPantsLeg
-	// Hat 帽子
 	Hat
 )
 
-//DefaultSettings 默认设置
+//DefaultSettings 定义了客户端的默认设置
 var DefaultSettings = Settings{
 	Locale:             "zh_CN",
 	ViewDistance:       15,

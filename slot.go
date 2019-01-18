@@ -6,7 +6,7 @@ import (
 	// "github.com/Nightgunner5/go.nbt"
 )
 
-//Solt 物品栏的一格
+//Solt 表示物品栏的一格
 type Solt struct {
 	ID    int
 	Count byte

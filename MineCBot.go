@@ -59,7 +59,7 @@ func PingAndList(addr string, port int) (string, error) {
 	return string(s), nil
 }
 
-// JoinServer connect a server from addr
+// JoinServer connect a Minecraft server
 func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 	//连接
 	g = new(Game)
