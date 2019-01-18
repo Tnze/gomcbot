@@ -48,8 +48,13 @@ type Position struct {
 	X, Y, Z int
 }
 
-//HandleGame recive server packet and response them correct
+// HandleGame recive server packet and response them correctly
+// Note that HandleGame will block if you don't recive from Events
 func (g *Game) HandleGame() error {
+	defer func() {
+		g.events <- DisconnectEvent
+		close(g.events)
+	}()
 	g.sendChan = make(chan pk.Packet, 64)
 	go func() {
 		for {
@@ -61,9 +66,6 @@ func (g *Game) HandleGame() error {
 		}
 	}()
 	for {
-
-		// fmt.Println("Reading Packet")
-		//Recive Packet
 		pack, err := g.recvPacket()
 		if err != nil {
 			return fmt.Errorf("recv packet in game fail: %v", err)
@@ -89,9 +91,7 @@ func (g *Game) HandleGame() error {
 			handleChunkDataPacket(g, pack)
 		case 0x32:
 			handlePlayerPositionAndLookPacket(g, reader)
-			fmt.Println("Pos: ", g.player.X, g.player.Y, g.player.Z)
 			sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
-			fmt.Println("Send PositionAndLookPacket")
 		case 0x54:
 			handleDeclareRecipesPacket(g, reader)
 		case 0x29:
@@ -111,10 +111,6 @@ func (g *Game) HandleGame() error {
 		default:
 			// fmt.Printf("ignore pack id %X\n", pack.ID)
 		}
-		// g.player.Yaw += 1
-		// if g.player.Yaw > 360 {
-		// 	g.player.Yaw -= 360
-		// }
 		sendPlayerLookPacket(g)
 	}
 }
@@ -202,6 +198,8 @@ func handleChunkDataPacket(g *Game, p *pk.Packet) error {
 	return err
 }
 
+var isSpawn bool
+
 func handlePlayerPositionAndLookPacket(g *Game, r *bytes.Reader) error {
 	x, err := pk.UnpackDouble(r)
 	if err != nil {
@@ -257,6 +255,11 @@ func handlePlayerPositionAndLookPacket(g *Game, r *bytes.Reader) error {
 	//confirm this packet with Teleport Confirm
 	TeleportID, _ := pk.UnpackVarInt(r)
 	sendTeleportConfirmPacket(g, TeleportID)
+
+	//handle PlayerSpawnEvent
+	if !isSpawn {
+		g.events <- PlayerSpawnEvent
+	}
 	return nil
 }
 
