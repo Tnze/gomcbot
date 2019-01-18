@@ -1,8 +1,8 @@
 package gomcbot
 
 import (
-	pk "./packet"
 	"bytes"
+	pk "github.com/Tnze/gomcbot/packet"
 	// "github.com/Nightgunner5/go.nbt"
 )
 

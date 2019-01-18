@@ -1,7 +1,7 @@
 package gomcbot
 
 import (
-	"./authenticate"
+	"github.com/Tnze/gomcbot/authenticate"
 	"testing"
 )
 

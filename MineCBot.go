@@ -1,11 +1,11 @@
 package gomcbot
 
 import (
-	pk "./packet"
 	"bufio"
 	"bytes"
 	"crypto/cipher"
 	"fmt"
+	pk "github.com/Tnze/gomcbot/packet"
 	"io"
 	"net"
 )

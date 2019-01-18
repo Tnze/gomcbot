@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"compress/zlib"
-	// "encoding/binary"
 	"fmt"
 	"io"
 	"unsafe"
@@ -124,9 +123,9 @@ func PackBoolean(b bool) byte {
 		return 0x01
 	}
 	return 0x00
-
 }
 
+//ReadNBytes read N bytes from bytes.Reader
 func ReadNBytes(b *bytes.Reader, n int) (bs []byte, err error) {
 	bs = make([]byte, n)
 	for i := 0; i < n; i++ {

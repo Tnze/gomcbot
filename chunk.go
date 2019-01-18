@@ -1,9 +1,9 @@
 package gomcbot
 
 import (
-	pk "./packet"
 	"bytes"
 	"fmt"
+	pk "github.com/Tnze/gomcbot/packet"
 	"io"
 )
 
@@ -118,7 +118,7 @@ func readChunkColumn(isFull bool, mask int32, data *bytes.Reader, hasSkyLight bo
 		}
 	}
 
-	fmt.Println(c)
+	// fmt.Println(c)
 	return &c, nil
 }
 

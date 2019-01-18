@@ -1,9 +1,9 @@
 package gomcbot
 
 import (
-	pk "./packet"
 	"bytes"
 	"fmt"
+	pk "github.com/Tnze/gomcbot/packet"
 )
 
 // Player includes the player's status

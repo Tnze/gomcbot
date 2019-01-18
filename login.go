@@ -1,8 +1,6 @@
 package gomcbot
 
 import (
-	"./CFB8"
-	pk "./packet"
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
@@ -12,6 +10,8 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"github.com/Tnze/gomcbot/CFB8"
+	pk "github.com/Tnze/gomcbot/packet"
 	"io/ioutil"
 	"net/http"
 	"strings"

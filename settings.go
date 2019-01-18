@@ -1,6 +1,6 @@
 package gomcbot
 
-import pk "./packet"
+import pk "github.com/Tnze/gomcbot/packet"
 
 // Settings 客户端设置
 type Settings struct {

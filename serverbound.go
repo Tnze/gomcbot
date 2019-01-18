@@ -1,7 +1,7 @@
 package gomcbot
 
 import (
-	pk "./packet"
+	pk "github.com/Tnze/gomcbot/packet"
 )
 
 // newHandshakePacket 构造了一个Handshake包
