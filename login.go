@@ -54,13 +54,13 @@ func unpackEncryptionRequest(p pk.Packet) (*encryptionRequest, error) {
 	return &er, nil
 }
 
-// AuthDigest computes a special SHA-1 digest required for Minecraft web
+// authDigest computes a special SHA-1 digest required for Minecraft web
 // authentication on Premium servers (online-mode=true).
 // Source: http://wiki.vg/Protocol_Encryption#Server
 //
 // Also many, many thanks to SirCmpwn and his wonderful gist (C#):
 // https://gist.github.com/SirCmpwn/404223052379e82f91e6
-func AuthDigest(serverID string, sharedSecret, publicKey []byte) string {
+func authDigest(serverID string, sharedSecret, publicKey []byte) string {
 	h := sha1.New()
 	h.Write([]byte(serverID))
 	h.Write(sharedSecret)
@@ -107,7 +107,7 @@ type request struct {
 }
 
 func loginAuth(AsTk, name, UUID string, shareSecret []byte, er encryptionRequest) error {
-	digest := AuthDigest(er.ServerID, shareSecret, er.PublicKey)
+	digest := authDigest(er.ServerID, shareSecret, er.PublicKey)
 
 	client := http.Client{}
 	requestPacket, err := json.Marshal(

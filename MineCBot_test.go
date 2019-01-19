@@ -29,7 +29,7 @@ func TestJoinServerOffline(t *testing.T) {
 	go g.HandleGame()
 	go func() {
 		for i := 0; i < 100; i++ {
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(time.Millisecond * 50)
 			g.LookYawPitch(g.player.Yaw+10, g.player.Pitch)
 			g.SetPosition(g.player.X+0.01, g.player.Y, g.player.Z)
 		}
