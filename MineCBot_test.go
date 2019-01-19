@@ -3,6 +3,7 @@ package gomcbot
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestPingAndList(t *testing.T) {
@@ -27,16 +28,18 @@ func TestJoinServerOffline(t *testing.T) {
 	events := g.GetEvents()
 	go g.HandleGame()
 
-	g.SetChatCallBack(func(msg string, pos byte) {
-		if pos == 0 {
-			fmt.Println(msg)
-		}
-	})
-
 	for e := range events {
 		switch e {
 		case PlayerSpawnEvent:
 			fmt.Println(g.player.X, g.player.Y, g.player.Z)
+			go func() {
+				for {
+					time.Sleep(time.Millisecond * 500)
+					w := g.GetWorld()
+					b := w.GetBlock(int(g.player.X), int(g.player.Y), int(g.player.Z))
+					fmt.Println(b.id)
+				}
+			}()
 		case PlayerDeadEvent:
 			fmt.Println("Player Dead")
 		default:

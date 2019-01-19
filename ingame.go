@@ -151,10 +151,69 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		err = handleUpdateHealthPacket(g, reader)
 	case 0x0E:
 		err = handleChatMessagePacket(g, reader)
+	case 0x0B:
+		err = handleBlockChangePacket(g, reader)
+	case 0x0F:
+		err = handleMultiBlockChangePacket(g, reader)
 	default:
 		// fmt.Printf("ignore pack id %X\n", p.ID)
 	}
 	return
+}
+
+func handleMultiBlockChangePacket(g *Game, r *bytes.Reader) error {
+	cX, err := pk.UnpackInt32(r)
+	if err != nil {
+		return err
+	}
+	cY, err := pk.UnpackInt32(r)
+	if err != nil {
+		return err
+	}
+
+	c := g.world.chunks[chunkLoc{int(cX), int(cY)}]
+	if c != nil {
+		RecordCount, err := pk.UnpackVarInt(r)
+		if err != nil {
+			return err
+		}
+
+		for i := int32(0); i < RecordCount; i++ {
+			xz, err := r.ReadByte()
+			if err != nil {
+				return err
+			}
+			y, err := r.ReadByte()
+			if err != nil {
+				return err
+			}
+			BlockID, err := pk.UnpackVarInt(r)
+			if err != nil {
+				return err
+			}
+			x, z := xz>>4, xz&0x0F
+
+			c.sections[y/16].blocks[x][y%16][z] = Block{id: uint(BlockID)}
+		}
+	}
+
+	return nil
+}
+
+func handleBlockChangePacket(g *Game, r *bytes.Reader) error {
+	x, y, z, err := pk.UnpackPosition(r)
+	if err != nil {
+		return err
+	}
+	c := g.world.chunks[chunkLoc{x / 16, y / 16}]
+	if c != nil {
+		id, err := pk.UnpackVarInt(r)
+		if err != nil {
+			return err
+		}
+		c.sections[y/16].blocks[x%16][y%16][z%16] = Block{id: uint(id)}
+	}
+	return nil
 }
 
 func handleChatMessagePacket(g *Game, r *bytes.Reader) error {
@@ -279,7 +338,7 @@ func handleHeldItemPacket(g *Game, r *bytes.Reader) error {
 
 func handleChunkDataPacket(g *Game, p *pk.Packet) error {
 	c, x, y, err := unpackChunkDataPacket(p, g.Info.Dimension == 0)
-	g.world.chunks[ChunkLoc{x, y}] = c
+	g.world.chunks[chunkLoc{x, y}] = c
 	return err
 }
 

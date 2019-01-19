@@ -84,7 +84,7 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 	g.reciver = bufio.NewReader(g.conn)
 	g.sender = g.conn
 	g.world.Entities = make(map[int32]Entity)
-	g.world.chunks = make(map[ChunkLoc]*Chunk)
+	g.world.chunks = make(map[chunkLoc]*Chunk)
 	g.events = make(chan Event)
 	g.motion = make(chan func())
 

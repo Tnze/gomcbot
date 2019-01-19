@@ -3,7 +3,7 @@ package gomcbot
 //World record all of the things in the world where player at
 type World struct {
 	Entities map[int32]Entity
-	chunks   map[ChunkLoc]*Chunk
+	chunks   map[chunkLoc]*Chunk
 }
 
 //Chunk store a 256*16*16 clolumn blocks
@@ -21,12 +21,31 @@ type Block struct {
 	id uint
 }
 
-//ChunkLoc record location of a Chunk
-type ChunkLoc struct {
+type chunkLoc struct {
 	X, Y int
 }
 
 //Entity 表示一个实体
 type Entity interface {
 	EntityID() int32
+}
+
+// GetBlock return the block in the position (x, y, z)
+func (w *World) GetBlock(x, y, z int) Block {
+	c := w.chunks[chunkLoc{x / 16, z / 16}]
+	if c != nil {
+		cx, cy, cz := x%16, y%16, z%16
+		if cx < 0 {
+			cx += 16
+		}
+		if cy < 0 {
+			cy += 16
+		}
+		if cz < 0 {
+			cz += 16
+		}
+		return c.sections[y/16].blocks[cx][cy][cz]
+	}
+
+	return Block{id: 0}
 }
