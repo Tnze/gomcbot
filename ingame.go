@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Player includes the player's status
+// Player includes the player's status.
 type Player struct {
 	entityID int32
 	UUID     [2]int64 //128bit UUID
@@ -24,12 +24,12 @@ type Player struct {
 	FoodSaturation float32 //食物饱和度
 }
 
-//EntityID get player's entity ID
+//EntityID get player's entity ID.
 func (p *Player) EntityID() int32 {
 	return p.entityID
 }
 
-//PlayerInfo content player info in server
+//PlayerInfo content player info in server.
 type PlayerInfo struct {
 	EntityID         int      //实体ID
 	Gamemode         int      //游戏模式
@@ -41,20 +41,20 @@ type PlayerInfo struct {
 	SpawnPosition    Position //主世界出生点
 }
 
-// PlayerAbilities defines what player can do
+// PlayerAbilities defines what player can do.
 type PlayerAbilities struct {
 	Flags               int8
 	FlyingSpeed         float32
 	FieldofViewModifier float32
 }
 
-//Position is a 3D vector
+//Position is a 3D vector.
 type Position struct {
 	X, Y, Z int
 }
 
-// HandleGame recive server packet and response them correctly
-// Note that HandleGame will block if you don't recive from Events
+// HandleGame recive server packet and response them correctly.
+// Note that HandleGame will block if you don't recive from Events.
 func (g *Game) HandleGame() error {
 	defer func() {
 		g.events <- DisconnectEvent
@@ -94,7 +94,10 @@ func (g *Game) HandleGame() error {
 		select {
 		case err := <-errChan:
 			return err
-		case pack := <-g.recvChan:
+		case pack, ok := <-g.recvChan:
+			if !ok {
+				break
+			}
 			err := handlePack(g, pack)
 			if err != nil {
 				fmt.Println(fmt.Errorf("handle packet 0x%X error: %v", pack.ID, err))
