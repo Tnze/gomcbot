@@ -3,7 +3,6 @@ package gomcbot
 import (
 	"fmt"
 	"testing"
-	"time"
 )
 
 func TestPingAndList(t *testing.T) {
@@ -27,13 +26,13 @@ func TestJoinServerOffline(t *testing.T) {
 	fmt.Println("Login success")
 	events := g.GetEvents()
 	go g.HandleGame()
-	go func() {
-		for i := 0; i < 100; i++ {
-			time.Sleep(time.Millisecond * 50)
-			g.LookYawPitch(g.player.Yaw+10, g.player.Pitch)
-			g.SetPosition(g.player.X+0.01, g.player.Y, g.player.Z)
+
+	g.SetChatCallBack(func(msg string, pos byte) {
+		if pos == 0 {
+			fmt.Println(msg)
 		}
-	}()
+	})
+
 	for e := range events {
 		switch e {
 		case PlayerSpawnEvent:

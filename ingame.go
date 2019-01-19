@@ -133,7 +133,7 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 	case 0x29:
 		err = handleEntityLookAndRelativeMove(g, reader)
 	case 0x39:
-		handleEntityHeadLook(g, reader)
+		handleEntityHeadLookPacket(g, reader)
 	case 0x28:
 		err = handleEntityRelativeMovePacket(g, reader)
 	case 0x21:
@@ -141,18 +141,35 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 	case 0x27:
 		handleEntityPacket(g, reader)
 	case 0x05:
-		err = handleSpawnPlayer(g, reader)
+		err = handleSpawnPlayerPacket(g, reader)
 	case 0x15:
-		err = handleWindowItems(g, reader)
+		err = handleWindowItemsPacket(g, reader)
 	case 0x44:
-		err = handleUpdateHealth(g, reader)
+		err = handleUpdateHealthPacket(g, reader)
+	case 0x0E:
+		err = handleChatMessagePacket(g, reader)
 	default:
 		// fmt.Printf("ignore pack id %X\n", p.ID)
 	}
 	return
 }
 
-func handleUpdateHealth(g *Game, r *bytes.Reader) (err error) {
+func handleChatMessagePacket(g *Game, r *bytes.Reader) error {
+	s, err := pk.UnpackString(r)
+	if err != nil {
+		return err
+	}
+	pos, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	if g.chatCallBack != nil {
+		g.chatCallBack(s, pos)
+	}
+	return nil
+}
+
+func handleUpdateHealthPacket(g *Game, r *bytes.Reader) (err error) {
 	g.player.Health, err = pk.UnpackFloat(r)
 	if err != nil {
 		return
@@ -393,7 +410,7 @@ func handleEntityLookAndRelativeMove(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleEntityHeadLook(g *Game, r *bytes.Reader) {
+func handleEntityHeadLookPacket(g *Game, r *bytes.Reader) {
 
 }
 
@@ -444,7 +461,7 @@ func handleEntityPacket(g *Game, r *bytes.Reader) {
 	// initialize an entity.
 }
 
-func handleSpawnPlayer(g *Game, r *bytes.Reader) (err error) {
+func handleSpawnPlayerPacket(g *Game, r *bytes.Reader) (err error) {
 	np := new(Player)
 	np.entityID, err = pk.UnpackVarInt(r)
 	if err != nil {
@@ -488,7 +505,7 @@ func handleSpawnPlayer(g *Game, r *bytes.Reader) (err error) {
 	return nil
 }
 
-func handleWindowItems(g *Game, r *bytes.Reader) (err error) {
+func handleWindowItemsPacket(g *Game, r *bytes.Reader) (err error) {
 	WindowID, err := r.ReadByte()
 	if err != nil {
 		return

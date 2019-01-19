@@ -12,21 +12,26 @@ import (
 
 // Game is the Object used to access Minecraft server
 type Game struct {
-	addr      string
-	port      int
-	conn      net.Conn
-	reciver   *bufio.Reader
-	sender    io.Writer
+	addr string
+	port int
+	conn net.Conn
+
+	reciver *bufio.Reader
+	sender  io.Writer
+
 	threshold int
 	Info      PlayerInfo
 	abilities PlayerAbilities
 	settings  Settings
 	player    Player
-	world     World           //the map data
-	sendChan  chan pk.Packet  //be used when HandleGame
-	recvChan  chan *pk.Packet //be used when HandleGame
-	events    chan Event
-	motion    chan func() //used by motion method to update player's positon
+	world     World //the map data
+
+	sendChan chan pk.Packet  //be used when HandleGame
+	recvChan chan *pk.Packet //be used when HandleGame
+	events   chan Event
+	motion   chan func() //used to submit a function and HandleGame do
+
+	chatCallBack func(msg string, pos byte) // ChatCallBack will be call when recive each chat message if isn't nil
 }
 
 // PingAndList chack server status and list online player
@@ -62,7 +67,9 @@ func PingAndList(addr string, port int) (string, error) {
 	return string(s), nil
 }
 
-// JoinServer connect a Minecraft server
+// JoinServer connect a Minecraft server.
+// Return a JSON string about server status.
+// see JSON format at https://wiki.vg/Server_List_Ping#Response
 func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 	//连接
 	g = new(Game)
@@ -177,5 +184,36 @@ func handleEncryptionRequest(g *Game, pack *pk.Packet, auth *Auth) error {
 		S: encoStream,
 		W: g.conn,
 	}
+	return nil
+}
+
+// SetChatCallBack will set the handler to callback when chat message was recived.
+//
+// msg will be a JSON string format as https://wiki.vg/Chat says
+// pos may be:
+// 		0: chat (chat box),
+// 		1: system message (chat box),
+// 		2: game info (above hotbar).
+func (g *Game) SetChatCallBack(handler func(msg string, pos byte)) {
+	g.motion <- func() {
+		g.chatCallBack = handler
+	}
+}
+
+// Chat send chat message to server
+// such as player send message in chat box
+// msg can not longger than 256
+func (g *Game) Chat(msg string) error {
+	data := pk.PackString(msg)
+	if len(data) > 256 {
+		return fmt.Errorf("message too big")
+	}
+
+	pack := pk.Packet{
+		ID:   0x02,
+		Data: data,
+	}
+
+	g.sendChan <- pack
 	return nil
 }

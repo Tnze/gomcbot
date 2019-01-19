@@ -6,9 +6,10 @@ import (
 
 // SetPosition method move your character around.
 // if delta is too big that the server will ignore
-func (g *Game) SetPosition(x, y, z float64) {
+func (g *Game) SetPosition(x, y, z float64, onGround bool) {
 	g.motion <- func() {
 		g.player.X, g.player.Y, g.player.Z = x, y, z
+		g.player.OnGround = onGround
 		sendPlayerPositionPacket(g) //向服务器更新位置
 	}
 }
