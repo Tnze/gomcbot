@@ -155,10 +155,43 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		err = handleBlockChangePacket(g, reader)
 	case 0x0F:
 		err = handleMultiBlockChangePacket(g, reader)
+	case 0x1B:
+		// should assumes that the server has already closed the connection by the time the packet arrives.
+		g.events <- DisconnectEvent
+	case 0x17:
+		err = handleSetSlotPacket(g, reader)
 	default:
 		// fmt.Printf("ignore pack id %X\n", p.ID)
 	}
 	return
+}
+
+func handleSetSlotPacket(g *Game, r *bytes.Reader) error {
+	windowID, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	slot, err := pk.UnpackInt16(r)
+	if err != nil {
+		return err
+	}
+	slotData, err := unpackSolt(r)
+	if err != nil {
+		return err
+	}
+
+	switch int8(windowID) {
+	case 0:
+		if slot < 32 || slot > 44 {
+			// return fmt.Errorf("slot out of range")
+			break
+		}
+		fallthrough
+	case -2:
+		g.player.Inventory[slot] = slotData
+		g.events <- InventoryChangeEvent
+	}
+	return nil
 }
 
 func handleMultiBlockChangePacket(g *Game, r *bytes.Reader) error {
@@ -589,6 +622,7 @@ func handleWindowItemsPacket(g *Game, r *bytes.Reader) (err error) {
 	switch WindowID {
 	case 0: //is player inventory
 		g.player.Inventory = solts
+		g.events <- InventoryChangeEvent
 	}
 	return nil
 }

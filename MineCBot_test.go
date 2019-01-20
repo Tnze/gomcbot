@@ -33,17 +33,17 @@ func TestJoinServerOffline(t *testing.T) {
 		case PlayerSpawnEvent:
 			fmt.Println(g.player.X, g.player.Y, g.player.Z)
 			go func() {
-				h := true
 				for {
 					time.Sleep(time.Millisecond * 500)
-					b := g.GetBlock(int(g.player.X), int(g.player.Y), int(g.player.Z))
-					fmt.Println(b.id)
-					g.SwingHand(h)
-					h = !h
+					player := g.GetPlayer()
+					fmt.Println("HeldItem: ", player.HeldItem)
+					fmt.Println("Inventory: ", player.Inventory)
 				}
 			}()
 		case PlayerDeadEvent:
 			fmt.Println("Player Dead")
+		case InventoryChangeEvent:
+			fmt.Println("Inventory Change")
 		default:
 			fmt.Println(e)
 		}
