@@ -171,7 +171,7 @@ func handleMultiBlockChangePacket(g *Game, r *bytes.Reader) error {
 		return err
 	}
 
-	c := g.world.chunks[chunkLoc{int(cX), int(cY)}]
+	c := g.wd.chunks[chunkLoc{int(cX), int(cY)}]
 	if c != nil {
 		RecordCount, err := pk.UnpackVarInt(r)
 		if err != nil {
@@ -205,7 +205,7 @@ func handleBlockChangePacket(g *Game, r *bytes.Reader) error {
 	if err != nil {
 		return err
 	}
-	c := g.world.chunks[chunkLoc{x / 16, y / 16}]
+	c := g.wd.chunks[chunkLoc{x / 16, y / 16}]
 	if c != nil {
 		id, err := pk.UnpackVarInt(r)
 		if err != nil {
@@ -338,7 +338,7 @@ func handleHeldItemPacket(g *Game, r *bytes.Reader) error {
 
 func handleChunkDataPacket(g *Game, p *pk.Packet) error {
 	c, x, y, err := unpackChunkDataPacket(p, g.Info.Dimension == 0)
-	g.world.chunks[chunkLoc{x, y}] = c
+	g.wd.chunks[chunkLoc{x, y}] = c
 	return err
 }
 
@@ -428,7 +428,7 @@ func handleEntityLookAndRelativeMove(g *Game, r *bytes.Reader) error {
 	if err != nil {
 		return err
 	}
-	E := g.world.Entities[ID]
+	E := g.wd.Entities[ID]
 	if E != nil {
 		P, ok := E.(*Player)
 		if !ok {
@@ -481,7 +481,7 @@ func handleEntityRelativeMovePacket(g *Game, r *bytes.Reader) error {
 	if err != nil {
 		return err
 	}
-	E := g.world.Entities[ID]
+	E := g.wd.Entities[ID]
 	if E != nil {
 		P, ok := E.(*Player)
 		if !ok {
@@ -563,7 +563,7 @@ func handleSpawnPlayerPacket(g *Game, r *bytes.Reader) (err error) {
 	np.Yaw = float32(yaw) * (1.0 / 256)
 	np.Pitch = float32(pitch) * (1.0 / 256)
 
-	g.world.Entities[np.entityID] = np //把该玩家添加到全局实体表里面
+	g.wd.Entities[np.entityID] = np //把该玩家添加到全局实体表里面
 	return nil
 }
 
@@ -654,7 +654,11 @@ func sendClientStatusPacket(g *Game, status int32) {
 	}
 }
 
-//GetWorld return the current World
-func (g *Game) GetWorld() World {
-	return g.world
+//hand could be 0: main hand, 1: off hand
+func sendAnimationPacket(g *Game, hand int32) {
+	data := pk.PackVarInt(hand)
+	g.sendChan <- pk.Packet{
+		ID:   0x27,
+		Data: data,
+	}
 }

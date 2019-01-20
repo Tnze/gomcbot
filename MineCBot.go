@@ -24,7 +24,7 @@ type Game struct {
 	abilities PlayerAbilities
 	settings  Settings
 	player    Player
-	world     World //the map data
+	wd        world //the map data
 
 	sendChan chan pk.Packet  //be used when HandleGame
 	recvChan chan *pk.Packet //be used when HandleGame
@@ -83,8 +83,8 @@ func (p *Auth) JoinServer(addr string, port int) (g *Game, err error) {
 	g.settings = DefaultSettings //默认设置
 	g.reciver = bufio.NewReader(g.conn)
 	g.sender = g.conn
-	g.world.Entities = make(map[int32]Entity)
-	g.world.chunks = make(map[chunkLoc]*Chunk)
+	g.wd.Entities = make(map[int32]Entity)
+	g.wd.chunks = make(map[chunkLoc]*Chunk)
 	g.events = make(chan Event)
 	g.motion = make(chan func())
 
@@ -216,4 +216,20 @@ func (g *Game) Chat(msg string) error {
 
 	g.sendChan <- pack
 	return nil
+}
+
+//GetBlock return the block at (x, y, z)
+func (g *Game) GetBlock(x, y, z int) Block {
+	bc := make(chan Block)
+
+	g.motion <- func() {
+		bc <- g.wd.getBlock(x, y, z)
+	}
+
+	return <-bc
+}
+
+//GetPlayer return the player
+func (g *Game) GetPlayer() Player {
+	return g.player
 }

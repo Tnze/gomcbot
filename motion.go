@@ -38,3 +38,13 @@ func (g *Game) LookYawPitch(yaw, pitch float32) {
 		sendPlayerLookPacket(g) //向服务器更新朝向
 	}
 }
+
+//SwingHand sent when the player's arm swings.
+// if hand is true, swing the main hand
+func (g *Game) SwingHand(hand bool) {
+	if hand {
+		sendAnimationPacket(g, 0)
+	} else {
+		sendAnimationPacket(g, 1)
+	}
+}
