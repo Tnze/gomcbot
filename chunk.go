@@ -63,12 +63,13 @@ func readChunkColumn(isFull bool, mask int32, data *bytes.Reader, hasSkyLight bo
 				return nil, fmt.Errorf("read BitsPerBlock fail: %v", err)
 			}
 			//读调色板
-			palette := make(map[uint]uint)
+			var palette []uint
 			if BitsPerBlock < 9 {
 				length, err := pk.UnpackVarInt(data)
 				if err != nil {
 					return nil, fmt.Errorf("read palette (id len) fail: %v", err)
 				}
+				palette = make([]uint, length)
 
 				for id := uint(0); id < uint(length); id++ {
 					stateID, err := pk.UnpackVarInt(data)
@@ -135,17 +136,18 @@ func perBits(BitsPerBlock byte) uint {
 	}
 }
 
-func fillSection(s *Section, bpb uint, DataArray []int64, palette map[uint]uint) {
-	perOffset := 64 - bpb
+func fillSection(s *Section, bpb uint, DataArray []int64, palette []uint) {
+	mask := uint(1<<bpb - 1)
 	for n := 0; n < 16*16*16; n++ {
 		offset := uint(n * int(bpb))
 		data := uint(DataArray[offset/64])
-		data <<= offset % 64
-		data >>= perOffset
+		data >>= offset % 64
 		if offset%64 > 64-bpb {
-			data &= uint(DataArray[offset/64+1]) >>
-				(bpb + offset%64 - 64)
+			l := bpb + offset%64 - 64
+			data &= (uint(DataArray[offset/64+1] << l))
 		}
+		data &= mask
+
 		if bpb < 9 {
 			s.blocks[n%16][n%(16*16)/16][n/(16*16)].id = palette[data]
 		} else {

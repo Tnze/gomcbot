@@ -32,18 +32,18 @@ type Entity interface {
 
 // GetBlock return the block in the position (x, y, z)
 func (w *World) GetBlock(x, y, z int) Block {
-	c := w.chunks[chunkLoc{x / 16, z / 16}]
+	c := w.chunks[chunkLoc{x >> 4, z >> 4}]
 	if c != nil {
-		cx, cy, cz := x%16, y%16, z%16
-		if cx < 0 {
-			cx += 16
-		}
-		if cy < 0 {
-			cy += 16
-		}
-		if cz < 0 {
-			cz += 16
-		}
+		cx, cy, cz := x&(16-1), y&(16-1), z&(16-1)
+		/*
+			n = n&(16-1)
+
+			is equal to
+
+			n %= 16
+			if n < 0 { n += 16 }
+		*/
+
 		return c.sections[y/16].blocks[cx][cy][cz]
 	}
 
