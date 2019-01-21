@@ -12,6 +12,7 @@ const (
 	PlayerSpawnEvent
 	PlayerDeadEvent
 	InventoryChangeEvent
+	BlockChangeEvent
 )
 
 // GetEvents returns a int type channal.

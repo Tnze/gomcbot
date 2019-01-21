@@ -2,10 +2,11 @@ package gomcbot
 
 import (
 	"math"
+	"time"
 )
 
 // SetPosition method move your character around.
-// if delta is too big that the server will ignore.
+// Server will ignore this if changes too much.
 func (g *Game) SetPosition(x, y, z float64, onGround bool) {
 	g.motion <- func() {
 		g.player.X, g.player.Y, g.player.Z = x, y, z
@@ -39,7 +40,7 @@ func (g *Game) LookYawPitch(yaw, pitch float32) {
 	}
 }
 
-//SwingHand sent when the player's arm swings.
+// SwingHand sent when the player's arm swings.
 // if hand is true, swing the main hand
 func (g *Game) SwingHand(hand bool) {
 	if hand {
@@ -47,4 +48,21 @@ func (g *Game) SwingHand(hand bool) {
 	} else {
 		sendAnimationPacket(g, 1)
 	}
+}
+
+// Dig a block in the position and wait for it's breaked
+func (g *Game) Dig(x, y, z int) error {
+	b := g.GetBlock(x, y, z).id
+	sendPlayerDiggingPacket(g, 0, x, y, z, Top) //start
+	sendPlayerDiggingPacket(g, 2, x, y, z, Top) //end
+
+	for {
+		time.Sleep(time.Millisecond * 50)
+		if g.GetBlock(x, y, z).id != b {
+			break
+		}
+		g.SwingHand(true)
+	}
+
+	return nil
 }

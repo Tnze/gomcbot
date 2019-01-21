@@ -128,6 +128,7 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		err = handleHeldItemPacket(g, reader)
 	case 0x22:
 		err = handleChunkDataPacket(g, p)
+		g.events <- BlockChangeEvent
 	case 0x32:
 		err = handlePlayerPositionAndLookPacket(g, reader)
 		sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
@@ -153,8 +154,10 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		err = handleChatMessagePacket(g, reader)
 	case 0x0B:
 		err = handleBlockChangePacket(g, reader)
+		g.events <- BlockChangeEvent
 	case 0x0F:
 		err = handleMultiBlockChangePacket(g, reader)
+		g.events <- BlockChangeEvent
 	case 0x1B:
 		// should assumes that the server has already closed the connection by the time the packet arrives.
 		g.events <- DisconnectEvent
@@ -238,13 +241,13 @@ func handleBlockChangePacket(g *Game, r *bytes.Reader) error {
 	if err != nil {
 		return err
 	}
-	c := g.wd.chunks[chunkLoc{x / 16, y / 16}]
+	c := g.wd.chunks[chunkLoc{x >> 4, z >> 4}]
 	if c != nil {
 		id, err := pk.UnpackVarInt(r)
 		if err != nil {
 			return err
 		}
-		c.sections[y/16].blocks[x%16][y%16][z%16] = Block{id: uint(id)}
+		c.sections[y/16].blocks[x&15][y&15][z&15] = Block{id: uint(id)}
 	}
 	return nil
 }
@@ -693,6 +696,17 @@ func sendAnimationPacket(g *Game, hand int32) {
 	data := pk.PackVarInt(hand)
 	g.sendChan <- pk.Packet{
 		ID:   0x27,
+		Data: data,
+	}
+}
+
+func sendPlayerDiggingPacket(g *Game, status int32, x, y, z int, face Face) {
+	data := pk.PackVarInt(status)
+	data = append(data, pk.PackPosition(x, y, z)...)
+	data = append(data, byte(face))
+
+	g.sendChan <- pk.Packet{
+		ID:   0x18,
 		Data: data,
 	}
 }

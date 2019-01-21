@@ -30,11 +30,24 @@ type Entity interface {
 	EntityID() int32
 }
 
+//Face is a face of a block
+type Face byte
+
+// All six faces in a block
+const (
+	Bottom Face = iota
+	Top
+	North
+	South
+	West
+	East
+)
+
 // getBlock return the block in the position (x, y, z)
 func (w *world) getBlock(x, y, z int) Block {
 	c := w.chunks[chunkLoc{x >> 4, z >> 4}]
 	if c != nil {
-		cx, cy, cz := x&(16-1), y&(16-1), z&(16-1)
+		cx, cy, cz := x&15, y&15, z&15
 		/*
 			n = n&(16-1)
 
