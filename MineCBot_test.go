@@ -31,28 +31,19 @@ func TestJoinServerOffline(t *testing.T) {
 	for e := range events {
 		switch e {
 		case PlayerSpawnEvent:
-			fmt.Println(int(g.player.X), int(g.player.Y), int(g.player.Z))
-			// go func() {
-			// 	g.Dig(-32, 66, -239)
-			// }()
+			p := g.GetPlayer()
+			fmt.Println(p.X, p.Y, p.Z)
 			go func() {
-				for {
-					time.Sleep(time.Second * 3)
-					for i := -5; i < 5; i++ {
-						for j := -5; j < 5; j++ {
-							fmt.Printf("%3d", g.GetBlock(int(g.player.X)+i, int(g.player.Y)-1, int(g.player.Z)+j).id)
-						}
-						fmt.Println()
-					}
-					fmt.Printf("from %d to %d, %d to %d\n", int(g.player.X)-5, int(g.player.X)+4, int(g.player.Z)-5, int(g.player.Z)+4)
-					fmt.Println()
-				}
+				time.Sleep(time.Second * 5)
+				g.Dig(int(p.X), int(p.Y)-1, int(p.Z))
 			}()
 
 		case PlayerDeadEvent:
 			fmt.Println("Player Dead")
 		case InventoryChangeEvent:
 			fmt.Println("Inventory Change")
+		case BlockChangeEvent:
+
 		default:
 			// fmt.Println(e)
 		}

@@ -149,9 +149,9 @@ func fillSection(s *Section, bpb uint, DataArray []int64, palette []uint) {
 		data &= mask
 
 		if bpb < 9 {
-			s.blocks[n%(16*16)/16][n/(16*16)][n%16].id = palette[data]
+			s.blocks[n%16][n/(16*16)][n%(16*16)/16].id = palette[data]
 		} else {
-			s.blocks[n%(16*16)/16][n/(16*16)][n%16].id = data
+			s.blocks[n%16][n/(16*16)][n%(16*16)/16].id = data
 		}
 	}
 }
