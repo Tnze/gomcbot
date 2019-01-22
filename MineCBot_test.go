@@ -3,7 +3,7 @@ package gomcbot
 import (
 	"fmt"
 	"testing"
-	// "time"
+	"time"
 )
 
 func TestPingAndList(t *testing.T) {

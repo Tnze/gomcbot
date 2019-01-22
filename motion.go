@@ -66,3 +66,13 @@ func (g *Game) Dig(x, y, z int) error {
 
 	return nil
 }
+
+// UseItem use the item in hand.
+// if hand is true, swing the main hand
+func (g *Game) UseItem(hand bool) {
+	if hand {
+		sendUseItemPacket(g, 0)
+	} else {
+		sendUseItemPacket(g, 1)
+	}
+}

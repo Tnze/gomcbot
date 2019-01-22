@@ -710,3 +710,11 @@ func sendPlayerDiggingPacket(g *Game, status int32, x, y, z int, face Face) {
 		Data: data,
 	}
 }
+
+func sendUseItemPacket(g *Game, hand int32) {
+	data := pk.PackVarInt(hand)
+	g.sendChan <- pk.Packet{
+		ID:   0x2A,
+		Data: data,
+	}
+}
