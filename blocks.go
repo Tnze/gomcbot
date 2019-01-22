@@ -1,6 +1,29 @@
 package gomcbot
 
-var blockStates = `
+import "encoding/json"
+
+var blockStates map[string]struct {
+	Properties map[string][]interface{} `json:"properties"`
+	States     []struct {
+		ID         int                    `json:"id"`
+		Default    bool                   `json:"default"`
+		Properties map[string]interface{} `json:"properties"`
+	} `json:"states"`
+}
+
+var blockNameByID []string
+
+func init() {
+	json.Unmarshal([]byte(blockStatesJSON), &blockStates)
+	blockNameByID = make([]string, 8598+1)
+	for i, v := range blockStates {
+		for _, s := range v.States {
+			blockNameByID[s.ID] = i
+		}
+	}
+}
+
+var blockStatesJSON = `
 {
   "minecraft:air": {
     "states": [

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	pk "github.com/Tnze/gomcbot/packet"
 	// "github.com/Nightgunner5/go.nbt"
+	"fmt"
 )
 
 //Solt 表示物品栏的一格
@@ -42,4 +43,8 @@ func unpackSolt(b *bytes.Reader) (Solt, error) {
 		}, nil
 	}
 	return Solt{}, nil
+}
+
+func (s Solt) String() string {
+	return fmt.Sprintf("solt[%s %d]", itemNameByID[s.ID], s.Count)
 }

@@ -31,11 +31,14 @@ func TestJoinServerOffline(t *testing.T) {
 	for e := range events {
 		switch e {
 		case PlayerSpawnEvent:
-			p := g.GetPlayer()
-			fmt.Println(p.X, p.Y, p.Z)
 			go func() {
-				time.Sleep(time.Second * 5)
-				g.Dig(int(p.X), int(p.Y)-1, int(p.Z))
+				for {
+					time.Sleep(time.Second)
+					p := g.GetPlayer()
+					// fmt.Println(p.X, p.Y, p.Z)
+					b := g.GetBlock(int(p.X), int(p.Y)-1, int(p.Z))
+					fmt.Println(b.id, b)
+				}
 			}()
 
 		case PlayerDeadEvent:

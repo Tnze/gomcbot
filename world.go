@@ -62,3 +62,7 @@ func (w *world) getBlock(x, y, z int) Block {
 
 	return Block{id: 0}
 }
+
+func (b Block) String() string {
+	return blockNameByID[b.id]
+}

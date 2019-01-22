@@ -45,3 +45,8 @@ func (s *Settings) pack() (p *pk.Packet) {
 	p.Data = append(p.Data, pk.PackVarInt(int32(s.MainHand))...)
 	return
 }
+
+// Settings set a Settings to Game
+func (g *Game) Settings(set Settings) {
+	g.settings = set
+}

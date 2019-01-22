@@ -1,6 +1,22 @@
 package gomcbot
 
-var itemIDs = `
+import "encoding/json"
+
+var itemIDs map[string]struct {
+	ProtocolID int `json:"protocol_id"`
+}
+
+var itemNameByID []string
+
+func init() {
+	json.Unmarshal([]byte(itemIDsJSON), &itemIDs)
+	itemNameByID = make([]string, 789+1)
+	for i, v := range itemIDs {
+		itemNameByID[v.ProtocolID] = i
+	}
+}
+
+var itemIDsJSON = `
 {
 	"minecraft:air": {
 	  "protocol_id": 0
