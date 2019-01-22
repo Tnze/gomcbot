@@ -133,19 +133,19 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		err = handlePlayerPositionAndLookPacket(g, reader)
 		sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
 	case 0x54:
-		handleDeclareRecipesPacket(g, reader)
+		// handleDeclareRecipesPacket(g, reader)
 	case 0x29:
-		err = handleEntityLookAndRelativeMove(g, reader)
+		// err = handleEntityLookAndRelativeMove(g, reader)
 	case 0x39:
-		handleEntityHeadLookPacket(g, reader)
+		// handleEntityHeadLookPacket(g, reader)
 	case 0x28:
-		err = handleEntityRelativeMovePacket(g, reader)
+		// err = handleEntityRelativeMovePacket(g, reader)
 	case 0x21:
 		err = handleKeepAlivePacket(g, reader)
 	case 0x27:
-		handleEntityPacket(g, reader)
+		//handleEntityPacket(g, reader)
 	case 0x05:
-		err = handleSpawnPlayerPacket(g, reader)
+		// err = handleSpawnPlayerPacket(g, reader)
 	case 0x15:
 		err = handleWindowItemsPacket(g, reader)
 	case 0x44:
@@ -163,10 +163,24 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		g.events <- DisconnectEvent
 	case 0x17:
 		err = handleSetSlotPacket(g, reader)
+	case 0x4D:
+		err = handleSoundEffect(g, reader)
 	default:
 		// fmt.Printf("ignore pack id %X\n", p.ID)
 	}
 	return
+}
+
+func handleSoundEffect(g *Game, r *bytes.Reader) error {
+	if g.soundCallBack != nil {
+		SoundID, err := pk.UnpackVarInt(r)
+		if err != nil {
+			return err
+		}
+		g.soundCallBack(SoundID)
+	}
+
+	return nil
 }
 
 func handleSetSlotPacket(g *Game, r *bytes.Reader) error {
@@ -253,15 +267,15 @@ func handleBlockChangePacket(g *Game, r *bytes.Reader) error {
 }
 
 func handleChatMessagePacket(g *Game, r *bytes.Reader) error {
-	s, err := pk.UnpackString(r)
-	if err != nil {
-		return err
-	}
-	pos, err := r.ReadByte()
-	if err != nil {
-		return err
-	}
 	if g.chatCallBack != nil {
+		s, err := pk.UnpackString(r)
+		if err != nil {
+			return err
+		}
+		pos, err := r.ReadByte()
+		if err != nil {
+			return err
+		}
 		g.chatCallBack(s, pos)
 	}
 	return nil

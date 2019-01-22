@@ -3,7 +3,6 @@ package gomcbot
 import (
 	"fmt"
 	"testing"
-	"time"
 )
 
 func TestPingAndList(t *testing.T) {
@@ -32,6 +31,14 @@ func TestJoinServerOffline(t *testing.T) {
 		switch e {
 		case PlayerSpawnEvent:
 			fmt.Println("Player Spawn")
+			go func() {
+				g.SetSoundCallBack(func(s int32) {
+					if s == 184 {
+						g.UseItem(true)
+					}
+				})
+				g.UseItem(true)
+			}()
 		case PlayerDeadEvent:
 			fmt.Println("Player Dead")
 		case InventoryChangeEvent:

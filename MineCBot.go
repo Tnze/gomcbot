@@ -31,7 +31,8 @@ type Game struct {
 	events   chan Event
 	motion   chan func() //used to submit a function and HandleGame do
 
-	chatCallBack func(msg string, pos byte) // ChatCallBack will be call when recive each chat message if isn't nil
+	chatCallBack  func(msg string, pos byte) // ChatCallBack will be call when recive each chat message if isn't nil
+	soundCallBack func(sound int32)
 }
 
 // PingAndList chack server status and list online player
@@ -197,6 +198,15 @@ func handleEncryptionRequest(g *Game, pack *pk.Packet, auth *Auth) error {
 func (g *Game) SetChatCallBack(handler func(msg string, pos byte)) {
 	g.motion <- func() {
 		g.chatCallBack = handler
+	}
+}
+
+// SetSoundCallBack will set the handler to callback when should play a sound in client.
+//
+// for sound id, check: https://pokechu22.github.io/Burger/1.13.2.html#sounds
+func (g *Game) SetSoundCallBack(handler func(sound int32)) {
+	g.motion <- func() {
+		g.soundCallBack = handler
 	}
 }
 
