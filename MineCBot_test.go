@@ -3,7 +3,7 @@ package gomcbot
 import (
 	"fmt"
 	"testing"
-	"time"
+	// "time"
 )
 
 func TestPingAndList(t *testing.T) {
@@ -16,8 +16,8 @@ func TestPingAndList(t *testing.T) {
 
 func TestJoinServerOffline(t *testing.T) {
 	p := Auth{
-		Name: "Mi_Xi_Xi",
-		UUID: "ff7a038f265c4d42b0cf04c575896469",
+		Name: "Name",
+		UUID: "UUID",
 		AsTk: "",
 	}
 	g, err := p.JoinServer("localhost", 25565)
@@ -31,16 +31,7 @@ func TestJoinServerOffline(t *testing.T) {
 	for e := range events {
 		switch e {
 		case PlayerSpawnEvent:
-			go func() {
-				for {
-					time.Sleep(time.Second)
-					p := g.GetPlayer()
-					// fmt.Println(p.X, p.Y, p.Z)
-					b := g.GetBlock(int(p.X), int(p.Y)-1, int(p.Z))
-					fmt.Println(b.id, b)
-				}
-			}()
-
+			fmt.Println("Player Spawn")
 		case PlayerDeadEvent:
 			fmt.Println("Player Dead")
 		case InventoryChangeEvent:
