@@ -1,6 +1,31 @@
 # GoMCbot
 A golang minecraft robot package
 
+## What can it do
+GoMCbot play a role in a Minecraft Client which has no graphy but you can control it by programing.
+These're what gomcbot can do and what can't do yet
+- [x] Join online server
+- [x] Join offline server
+- [x] Parse chunk data
+- [x] View inventory
+- [x] Use item
+- [x] Listening sound
+- [x] Send chat message
+- [x] Recive chat message
+- [x] Move around and look around
+- [x] Swing hands
+- [x] Mine blocks
+- [ ] Place blocks
+- [ ] Steer vehicle
+- [ ] Steer boat
+- [ ] Craft
+- [ ] Pick item
+- [ ] Use entity
+- [ ] Edit book
+- [ ] Enchant item
+- [ ] Record entity
+- [ ] Unload chunks
+
 # Usage
 There are some basic usage example. For more information, see [Wiki](https://github.com/Tnze/gomcbot/wiki).
 
