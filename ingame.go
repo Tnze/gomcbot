@@ -177,7 +177,27 @@ func handleSoundEffect(g *Game, r *bytes.Reader) error {
 		if err != nil {
 			return err
 		}
-		g.soundCallBack(SoundID)
+		x, err := pk.UnpackInt32(r)
+		if err != nil {
+			return err
+		}
+		y, err := pk.UnpackInt32(r)
+		if err != nil {
+			return err
+		}
+		z, err := pk.UnpackInt32(r)
+		if err != nil {
+			return err
+		}
+		Volume, err := pk.UnpackFloat(r)
+		if err != nil {
+			return err
+		}
+		Pitch, err := pk.UnpackFloat(r)
+		if err != nil {
+			return err
+		}
+		g.soundCallBack(SoundID, float64(x)/8, float64(y)/8, float64(z)/8, Volume, Pitch)
 	}
 
 	return nil

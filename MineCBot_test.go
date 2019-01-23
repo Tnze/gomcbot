@@ -32,7 +32,7 @@ func TestJoinServerOffline(t *testing.T) {
 		case PlayerSpawnEvent:
 			fmt.Println("Player Spawn")
 			go func() {
-				g.SetSoundCallBack(func(s int32) {
+				g.SetSoundCallBack(func(s int32, x, y, z float64, v, p float32) {
 					if s == 184 {
 						g.UseItem(true)
 					}
