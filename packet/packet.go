@@ -6,7 +6,7 @@ import (
 	"compress/zlib"
 	"fmt"
 	"io"
-	"unsafe"
+	"math"
 )
 
 // Packet define a net data package
@@ -107,14 +107,12 @@ func PackPosition(x, y, z int) (p []byte) {
 
 //PackFloat 打包一个32位浮点数
 func PackFloat(f float32) (p []byte) {
-	n := *(*uint32)(unsafe.Pointer(&f))
-	return PackUint32(n)
+	return PackUint32(math.Float32bits(f))
 }
 
 //PackDouble 打包一个64位浮点数
 func PackDouble(d float64) (p []byte) {
-	n := *(*uint64)(unsafe.Pointer(&d))
-	return PackUint64(n)
+	return PackUint64(math.Float64bits(d))
 }
 
 //PackBoolean 打包一个布尔值
@@ -219,13 +217,13 @@ func UnpackPosition(b *bytes.Reader) (x, y, z int, err error) {
 // UnpackFloat 读取一个单精度浮点数
 func UnpackFloat(b *bytes.Reader) (float32, error) {
 	n, err := UnpackInt32(b)
-	return *(*float32)(unsafe.Pointer(&n)), err
+	return math.Float32frombits(uint32(n)), err
 }
 
 // UnpackDouble 读取一个双精度浮点数
 func UnpackDouble(b *bytes.Reader) (float64, error) {
 	n, err := UnpackInt64(b)
-	return *(*float64)(unsafe.Pointer(&n)), err
+	return math.Float64frombits(uint64(n)), err
 }
 
 // RecvPacket recive a packet from server
