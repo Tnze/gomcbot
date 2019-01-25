@@ -26,6 +26,11 @@ func TweenLineMove(g *bot.Game, x, z float64) error {
 	p := g.GetPlayer()
 	start := time.Now()
 	x0, y0, z0 := p.GetPosition()
+
+	if similar(x0, x) && similar(z0, z) {
+		return nil
+	}
+
 	y0 = math.Floor(y0)
 	ofstX, ofstZ := x-x0, z-z0
 	t := time.Duration(float64(time.Second) * (math.Sqrt(ofstX*ofstX+ofstZ*ofstZ) / 4.2))
