@@ -104,6 +104,7 @@ func (g *Game) HandleGame() error {
 	for {
 		select {
 		case err := <-errChan:
+			close(g.sendChan)
 			return err
 		case pack, ok := <-g.recvChan:
 			if !ok {
@@ -111,8 +112,8 @@ func (g *Game) HandleGame() error {
 			}
 			err := handlePack(g, pack)
 			if err != nil {
-				fmt.Println(fmt.Errorf("handle packet 0x%X error: %v", pack.ID, err))
-				// return fmt.Errorf("handle packet 0x%X error: %v", pack.ID, err)
+				// fmt.Println(fmt.Errorf("handle packet 0x%X error: %v", pack.ID, err))
+				return fmt.Errorf("handle packet 0x%X error: %v", pack.ID, err)
 			}
 		case motion := <-g.motion:
 			motion()
@@ -171,7 +172,8 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		g.events <- BlockChangeEvent
 	case 0x1B:
 		// should assumes that the server has already closed the connection by the time the packet arrives.
-		g.events <- DisconnectEvent
+		// g.events <- DisconnectEvent
+		err = fmt.Errorf("disconnect")
 	case 0x17:
 		err = handleSetSlotPacket(g, reader)
 	case 0x4D:

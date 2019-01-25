@@ -1,10 +1,10 @@
 package gomcbot
 
 import (
-	"./util"
+	// "./util"
 	"fmt"
 	"testing"
-	"time"
+	// "time"
 )
 
 func TestPingAndList(t *testing.T) {
