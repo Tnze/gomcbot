@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestTweenLook(t *testing.T) {
+func joinServer() (*bot.Game, <-chan bot.Event, error) {
 	p := bot.Auth{
 		Name: "Name",
 		UUID: "UUID",
@@ -15,11 +15,43 @@ func TestTweenLook(t *testing.T) {
 	}
 	g, err := p.JoinServer("localhost", 25565)
 	if err != nil {
-		t.Fatal(err)
+		return nil, nil, err
 	}
 	fmt.Println("Login success")
 	events := g.GetEvents()
 	go g.HandleGame()
+
+	return g, events, nil
+}
+
+func TestTweenLookAt(t *testing.T) {
+	g, events, err := joinServer()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for e := range events {
+		switch e {
+		case bot.PlayerSpawnEvent:
+			fmt.Println("Player Spawn")
+			go func() {
+				for {
+					TweenLookAt(g, -10, 64, 10, time.Second*2)
+					TweenLookAt(g, 10, 64, -10, time.Second*2)
+				}
+			}()
+
+		default:
+			// fmt.Println(e)
+		}
+	}
+}
+
+func TestTweenLook(t *testing.T) {
+	g, events, err := joinServer()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for e := range events {
 		switch e {
@@ -40,18 +72,10 @@ func TestTweenLook(t *testing.T) {
 }
 
 func TestLineMove(t *testing.T) {
-	p := bot.Auth{
-		Name: "Name",
-		UUID: "UUID",
-		AsTk: "",
-	}
-	g, err := p.JoinServer("localhost", 25565)
+	g, events, err := joinServer()
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("Login success")
-	events := g.GetEvents()
-	go g.HandleGame()
 
 	for e := range events {
 		switch e {
@@ -85,18 +109,10 @@ func TestLineMove(t *testing.T) {
 }
 
 func TestTweenJump(t *testing.T) {
-	p := bot.Auth{
-		Name: "Name",
-		UUID: "UUID",
-		AsTk: "",
-	}
-	g, err := p.JoinServer("localhost", 25565)
+	g, events, err := joinServer()
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("Login success")
-	events := g.GetEvents()
-	go g.HandleGame()
 
 	for e := range events {
 		switch e {
@@ -116,18 +132,10 @@ func TestTweenJump(t *testing.T) {
 }
 
 func TestTweenJumpTo(t *testing.T) {
-	p := bot.Auth{
-		Name: "Name",
-		UUID: "UUID",
-		AsTk: "",
-	}
-	g, err := p.JoinServer("localhost", 25565)
+	g, events, err := joinServer()
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("Login success")
-	events := g.GetEvents()
-	go g.HandleGame()
 
 	for e := range events {
 		switch e {

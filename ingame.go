@@ -190,6 +190,11 @@ func handleSoundEffect(g *Game, r *bytes.Reader) error {
 		if err != nil {
 			return err
 		}
+		SoundCategory, err := pk.UnpackVarInt(r)
+		if err != nil {
+			return err
+		}
+
 		x, err := pk.UnpackInt32(r)
 		if err != nil {
 			return err
@@ -210,7 +215,7 @@ func handleSoundEffect(g *Game, r *bytes.Reader) error {
 		if err != nil {
 			return err
 		}
-		g.soundCallBack(SoundID, float64(x)/8, float64(y)/8, float64(z)/8, Volume, Pitch)
+		g.soundCallBack(SoundID, SoundCategory, float64(x)/8, float64(y)/8, float64(z)/8, Volume, Pitch)
 	}
 
 	return nil

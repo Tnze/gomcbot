@@ -32,7 +32,7 @@ type Game struct {
 	motion   chan func() //used to submit a function and HandleGame do
 
 	chatCallBack  func(msg string, pos byte) // ChatCallBack will be call when recive each chat message if isn't nil
-	soundCallBack func(sound int32, x, y, z float64, volume, pitch float32)
+	soundCallBack func(sound int32, category int32, x, y, z float64, volume, pitch float32)
 }
 
 // PingAndList chack server status and list online player
@@ -207,7 +207,7 @@ func (g *Game) SetChatCallBack(handler func(msg string, pos byte)) {
 // x, y, z is the position the sound played
 // volume is the volume of the sound
 // pitch is the direction of the sound
-func (g *Game) SetSoundCallBack(handler func(sound int32, x, y, z float64, volume, pitch float32)) {
+func (g *Game) SetSoundCallBack(handler func(sound int32, category int32, x, y, z float64, volume, pitch float32)) {
 	g.motion <- func() {
 		g.soundCallBack = handler
 	}
