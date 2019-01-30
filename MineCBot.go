@@ -31,7 +31,7 @@ type Game struct {
 	events   chan Event
 	motion   chan func() //used to submit a function and HandleGame do
 
-	chatCallBack  func(msg string, pos byte) // ChatCallBack will be call when recive each chat message if isn't nil
+	chatCallBack  func(msg ChatMsg, pos byte) // ChatCallBack will be call when recive each chat message if isn't nil
 	soundCallBack func(sound int32, category int32, x, y, z float64, volume, pitch float32)
 }
 
@@ -195,7 +195,7 @@ func handleEncryptionRequest(g *Game, pack *pk.Packet, auth *Auth) error {
 // 		0: chat (chat box),
 // 		1: system message (chat box),
 // 		2: game info (above hotbar).
-func (g *Game) SetChatCallBack(handler func(msg string, pos byte)) {
+func (g *Game) SetChatCallBack(handler func(msg ChatMsg, pos byte)) {
 	g.motion <- func() {
 		g.chatCallBack = handler
 	}

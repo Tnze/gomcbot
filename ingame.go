@@ -314,7 +314,11 @@ func handleChatMessagePacket(g *Game, r *bytes.Reader) error {
 		if err != nil {
 			return err
 		}
-		g.chatCallBack(s, pos)
+		cm, err := newChatMsg(s)
+		if err != nil {
+			return err
+		}
+		g.chatCallBack(cm, pos)
 	}
 	return nil
 }
