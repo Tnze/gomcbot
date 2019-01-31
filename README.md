@@ -14,7 +14,7 @@ These're what gomcbot can do and what can't do yet
 - [x] Use item
 - [x] Listening sound
 - [x] Send chat message
-- [x] Recive chat message
+- [x] Recive and **parse** chat message
 - [x] Move around and look around
 - [x] Swing hands
 - [x] Mine blocks
