@@ -29,23 +29,6 @@ func newChatMsg(jsonMsg string) (ChatMsg, error) {
 	return ChatMsg(jc), err
 }
 
-//ToString convert a ChatMsg to string without using format
-func (c ChatMsg) ToString() (s string) {
-	s += c.Text
-	if c.Translate == "chat.type.text" {
-		if msg, ok := c.With[1].(string); ok {
-			jc, _ := toChatMsg(c.With[0])
-			s += fmt.Sprintf("<%s> %s", jc.ToString(), msg)
-		}
-	}
-	if c.Extra != nil {
-		for i := range c.Extra {
-			s += ChatMsg(c.Extra[i]).ToString()
-		}
-	}
-	return
-}
-
 // String return the message with escape sequence for ansi color.
 // On windows, you may want print this string using
 // github.com/mattn/go-colorable.
@@ -100,11 +83,19 @@ func (c ChatMsg) String() (s string) {
 	s = s[:len(s)-1] + "m"
 
 	s += c.Text
-	if c.Translate == "chat.type.text" {
-		if msg, ok := c.With[1].(string); ok {
-			jc, _ := toChatMsg(c.With[0])
-			s += fmt.Sprintf("<%s> %s", jc.ToString(), msg)
+
+	//handle translate
+	if c.Translate != "" {
+		args := make([]interface{}, len(c.With))
+		for i, v := range c.With {
+			if msg, ok := v.(string); ok {
+				args[i] = msg
+			} else {
+				args[i], _ = toChatMsg(v) //ignore error
+			}
 		}
+
+		s += fmt.Sprintf(enUs[c.Translate], args...)
 	}
 
 	s += "\033[0m"

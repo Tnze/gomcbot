@@ -16,19 +16,6 @@ var texts = []string{
 	"<Xi_Xi_Mi> 好像是这个id。。",
 }
 
-func TestChatMsgToString(t *testing.T) {
-	for i, v := range jsons {
-		cm, err := newChatMsg(v)
-		if err != nil {
-			t.Error(err)
-		}
-		if cm.ToString() != texts[i] {
-			t.Error("Should be " + texts[i])
-		}
-	}
-
-}
-
 func TestChatMsgFormatString(t *testing.T) {
 	// Windows:
 
