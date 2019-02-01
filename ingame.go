@@ -314,7 +314,7 @@ func handleChatMessagePacket(g *Game, r *bytes.Reader) error {
 		if err != nil {
 			return err
 		}
-		cm, err := newChatMsg(s)
+		cm, err := newChatMsg([]byte(s))
 		if err != nil {
 			return err
 		}
