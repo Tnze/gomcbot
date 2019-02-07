@@ -33,7 +33,8 @@ These're what gomcbot can do and what can't do yet
 # Usage
 There are some basic usage example. For more information, see [Wiki](https://github.com/Tnze/gomcbot/wiki).
 
-## PingList a minecraft server
+To use gomcbot, simply run `go get -u github.com/Tnze/gomcbot`
+## Ping and List a Minecraft Server
 
 ```go
 package main
@@ -53,7 +54,7 @@ func main() {
 }
 ```
 
-## Get a mojang AccessToken (Login)
+## Get a Mojang AccessToken (Login)
 ```go
 package main
 
@@ -71,7 +72,7 @@ func main() {
 }
 ```
 
-## Join a server (online)
+## Join a Server (online)
 ```go
 package main
 
@@ -108,7 +109,7 @@ func main() {
 
 ```
 
-## Join a server (offline)
+## Join a Server (offline)
 ```go
 package main
 
