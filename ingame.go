@@ -250,6 +250,10 @@ func handleSetSlotPacket(g *Game, r *bytes.Reader) error {
 }
 
 func handleMultiBlockChangePacket(g *Game, r *bytes.Reader) error {
+	if !g.settings.ReciveMap {
+		return nil
+	}
+
 	cX, err := pk.UnpackInt32(r)
 	if err != nil {
 		return err
@@ -289,6 +293,9 @@ func handleMultiBlockChangePacket(g *Game, r *bytes.Reader) error {
 }
 
 func handleBlockChangePacket(g *Game, r *bytes.Reader) error {
+	if !g.settings.ReciveMap {
+		return nil
+	}
 	x, y, z, err := pk.UnpackPosition(r)
 	if err != nil {
 		return err
@@ -301,6 +308,7 @@ func handleBlockChangePacket(g *Game, r *bytes.Reader) error {
 		}
 		c.sections[y/16].blocks[x&15][y&15][z&15] = Block{id: uint(id)}
 	}
+
 	return nil
 }
 
@@ -429,6 +437,10 @@ func handleHeldItemPacket(g *Game, r *bytes.Reader) error {
 }
 
 func handleChunkDataPacket(g *Game, p *pk.Packet) error {
+	if !g.settings.ReciveMap {
+		return nil
+	}
+
 	c, x, y, err := unpackChunkDataPacket(p, g.Info.Dimension == 0)
 	g.wd.chunks[chunkLoc{x, y}] = c
 	return err

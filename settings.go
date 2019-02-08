@@ -10,6 +10,7 @@ type Settings struct {
 	ChatColors         bool   //聊天颜色
 	DisplayedSkinParts uint8  //皮肤显示
 	MainHand           int    //主手
+	ReciveMap          bool   //接收地图数据
 }
 
 /*
@@ -33,6 +34,7 @@ var DefaultSettings = Settings{
 	ChatMode:           0,
 	DisplayedSkinParts: Jacket | LeftSleeve | RightSleeve | LeftPantsLeg | RightPantsLeg | Hat,
 	MainHand:           1,
+	ReciveMap:          true,
 }
 
 func (s *Settings) pack() (p *pk.Packet) {
