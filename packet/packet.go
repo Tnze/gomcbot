@@ -240,6 +240,10 @@ func RecvPacket(s *bufio.Reader, useZlib bool) (*Packet, error) {
 		}
 	}
 
+	if len < 1 {
+		return nil, fmt.Errorf("packet length too short")
+	}
+
 	data := make([]byte, len) //读包内容
 	var err error
 	for i := 0; i < len; i++ {
@@ -253,6 +257,7 @@ func RecvPacket(s *bufio.Reader, useZlib bool) (*Packet, error) {
 	if useZlib {
 		return UnCompress(data)
 	}
+
 	return &Packet{
 		ID:   data[0],
 		Data: data[1:],
