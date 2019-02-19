@@ -55,6 +55,8 @@ func main() {
 ```
 
 ## Get a Mojang AccessToken (Login)
+> This is the basic authenticate function. Maybe you could get more control of login process by using 
+https://github.com/JoshuaDoes/go-yggdrasil.
 ```go
 package main
 
@@ -77,7 +79,7 @@ func main() {
 package main
 
 import (
-	// mb "github.com/Tnze/gomcbot"
+	bot "github.com/Tnze/gomcbot"
 	auth "github.com/Tnze/gomcbot/authenticate"
 )
 
@@ -100,8 +102,8 @@ func main() {
 	go game.HandleGame()
 
 	for e := range events {//Reciving events
-		switch e {
-		case mb.PlayerSpawnEvent:
+		switch e.(type) {
+		case bot.PlayerSpawnEvent:
 			fmt.Println("Player is spawn!")
 		}
 	}
@@ -114,7 +116,7 @@ func main() {
 package main
 
 import (
-	mb "github.com/Tnze/gomcbot"
+	bot "github.com/Tnze/gomcbot"
 )
 
 func main() {
@@ -131,8 +133,8 @@ func main() {
 
 	go game.HandleGame()
 	for e := range events {
-		switch e {
-		case mb.PlayerSpawnEvent:
+		switch e.(type) {
+		case bot.PlayerSpawnEvent:
 			fmt.Println("Player is spawn!")
 		}
 	}

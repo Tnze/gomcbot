@@ -31,7 +31,7 @@ func TestTweenLookAt(t *testing.T) {
 	}
 
 	for e := range events {
-		switch e {
+		switch e.(type) {
 		case bot.PlayerSpawnEvent:
 			fmt.Println("Player Spawn")
 			go func() {
@@ -54,7 +54,7 @@ func TestTweenLook(t *testing.T) {
 	}
 
 	for e := range events {
-		switch e {
+		switch e.(type) {
 		case bot.PlayerSpawnEvent:
 			fmt.Println("Player Spawn")
 			go func() {
@@ -78,7 +78,7 @@ func TestLineMove(t *testing.T) {
 	}
 
 	for e := range events {
-		switch e {
+		switch e.(type) {
 		case bot.PlayerSpawnEvent:
 			fmt.Println("Player Spawn")
 			go func() {
@@ -115,7 +115,7 @@ func TestTweenJump(t *testing.T) {
 	}
 
 	for e := range events {
-		switch e {
+		switch e.(type) {
 		case bot.PlayerSpawnEvent:
 			fmt.Println("Player Spawn")
 			go func() {
@@ -138,7 +138,7 @@ func TestTweenJumpTo(t *testing.T) {
 	}
 
 	for e := range events {
-		switch e {
+		switch e.(type) {
 		case bot.PlayerSpawnEvent:
 			fmt.Println("Player Spawn")
 			go func() {

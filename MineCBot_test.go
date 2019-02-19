@@ -30,7 +30,7 @@ func TestJoinServerOffline(t *testing.T) {
 	go g.HandleGame()
 
 	for e := range events {
-		switch e {
+		switch e.(type) {
 		case PlayerSpawnEvent:
 			fmt.Println("Player Spawn")
 		case PlayerDeadEvent:
