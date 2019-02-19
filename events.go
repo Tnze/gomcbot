@@ -12,10 +12,10 @@ type Event interface{}
 type DisconnectEvent ChatMsg
 
 //PlayerSpawnEvent sent when this client is ready to playing.
-type PlayerSpawnEvent Event
+type PlayerSpawnEvent bool
 
 //PlayerDeadEvent sent when player is dead
-type PlayerDeadEvent Event
+type PlayerDeadEvent int
 
 //InventoryChangeEvent sent when player's inventory is changed.
 //The value is the changed slot id.
@@ -24,7 +24,7 @@ type PlayerDeadEvent Event
 type InventoryChangeEvent int16
 
 //BlockChangeEvent sent when a block has been broken or placed
-type BlockChangeEvent Event
+type BlockChangeEvent bool
 
 // ChatMessageEvent sent when chat message was recived.
 // When Pos is 0, this message should be displayed at chat box.
