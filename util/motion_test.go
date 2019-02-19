@@ -22,7 +22,7 @@ func TestCalibrate(t *testing.T) {
 	go g.HandleGame()
 
 	for e := range events {
-		switch e {
+		switch e.(type) {
 		case bot.PlayerSpawnEvent:
 			fmt.Println("Player Spawn")
 			go func() {

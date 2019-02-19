@@ -68,7 +68,6 @@ type Position struct {
 // Note that HandleGame will block if you don't recive from Events.
 func (g *Game) HandleGame() error {
 	defer func() {
-		g.events <- DisconnectEvent
 		close(g.events)
 	}()
 
@@ -140,7 +139,7 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		err = handleHeldItemPacket(g, reader)
 	case 0x22:
 		err = handleChunkDataPacket(g, p)
-		g.events <- BlockChangeEvent
+		g.events <- BlockChangeEvent(nil)
 	case 0x32:
 		err = handlePlayerPositionAndLookPacket(g, reader)
 		sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
@@ -166,13 +165,13 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		err = handleChatMessagePacket(g, reader)
 	case 0x0B:
 		err = handleBlockChangePacket(g, reader)
-		g.events <- BlockChangeEvent
+		g.events <- BlockChangeEvent(nil)
 	case 0x0F:
 		err = handleMultiBlockChangePacket(g, reader)
-		g.events <- BlockChangeEvent
+		g.events <- BlockChangeEvent(nil)
 	case 0x1B:
 		// should assumes that the server has already closed the connection by the time the packet arrives.
-		// g.events <- DisconnectEvent
+		g.events <- DisconnectEvent{Text: "disconnect"}
 		err = fmt.Errorf("disconnect")
 	case 0x17:
 		err = handleSetSlotPacket(g, reader)
@@ -244,7 +243,7 @@ func handleSetSlotPacket(g *Game, r *bytes.Reader) error {
 		fallthrough
 	case -2:
 		g.player.Inventory[slot] = slotData
-		g.events <- InventoryChangeEvent
+		g.events <- InventoryChangeEvent(slot)
 	}
 	return nil
 }
@@ -313,21 +312,21 @@ func handleBlockChangePacket(g *Game, r *bytes.Reader) error {
 }
 
 func handleChatMessagePacket(g *Game, r *bytes.Reader) error {
-	if g.chatCallBack != nil {
-		s, err := pk.UnpackString(r)
-		if err != nil {
-			return err
-		}
-		pos, err := r.ReadByte()
-		if err != nil {
-			return err
-		}
-		cm, err := newChatMsg([]byte(s))
-		if err != nil {
-			return err
-		}
-		g.chatCallBack(cm, pos)
+
+	s, err := pk.UnpackString(r)
+	if err != nil {
+		return err
 	}
+	pos, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	cm, err := newChatMsg([]byte(s))
+	if err != nil {
+		return err
+	}
+	g.events <- ChatMessageEvent{cm, pos}
+
 	return nil
 }
 
@@ -346,7 +345,7 @@ func handleUpdateHealthPacket(g *Game, r *bytes.Reader) (err error) {
 	}
 
 	if g.player.Health < 1 { //player is dead
-		g.events <- PlayerDeadEvent //Dead event
+		g.events <- PlayerDeadEvent(nil) //Dead event
 		sendPlayerPositionAndLookPacket(g)
 		time.Sleep(time.Second * 2)  //wait for 2 sec make it more like a human
 		sendClientStatusPacket(g, 0) //status 0 means perform respawn
@@ -506,7 +505,7 @@ func handlePlayerPositionAndLookPacket(g *Game, r *bytes.Reader) error {
 
 	//handle PlayerSpawnEvent
 	if !isSpawn {
-		g.events <- PlayerSpawnEvent
+		g.events <- PlayerSpawnEvent(nil)
 		isSpawn = true
 	}
 	return nil
@@ -693,7 +692,7 @@ func handleWindowItemsPacket(g *Game, r *bytes.Reader) (err error) {
 	switch WindowID {
 	case 0: //is player inventory
 		g.player.Inventory = solts
-		g.events <- InventoryChangeEvent
+		g.events <- InventoryChangeEvent(-2)
 	}
 	return nil
 }
