@@ -104,7 +104,7 @@ func main() {
 	for e := range events {//Reciving events
 		switch e.(type) {
 		case bot.PlayerSpawnEvent:
-			fmt.Println("Player is spawn!")
+			fmt.Println("Player is spawned!")
 		}
 	}
 }
@@ -135,7 +135,7 @@ func main() {
 	for e := range events {
 		switch e.(type) {
 		case bot.PlayerSpawnEvent:
-			fmt.Println("Player is spawn!")
+			fmt.Println("Player is spawned!")
 		}
 	}
 }
