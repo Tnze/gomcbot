@@ -30,8 +30,6 @@ type Game struct {
 	recvChan chan *pk.Packet //be used when HandleGame
 	events   chan Event
 	motion   chan func() //used to submit a function and HandleGame do
-
-	soundCallBack func(sound int32, category int32, x, y, z float64, volume, pitch float32)
 }
 
 // PingAndList chack server status and list online player

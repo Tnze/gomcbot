@@ -184,38 +184,36 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 }
 
 func handleSoundEffect(g *Game, r *bytes.Reader) error {
-	if g.soundCallBack != nil {
-		SoundID, err := pk.UnpackVarInt(r)
-		if err != nil {
-			return err
-		}
-		SoundCategory, err := pk.UnpackVarInt(r)
-		if err != nil {
-			return err
-		}
-
-		x, err := pk.UnpackInt32(r)
-		if err != nil {
-			return err
-		}
-		y, err := pk.UnpackInt32(r)
-		if err != nil {
-			return err
-		}
-		z, err := pk.UnpackInt32(r)
-		if err != nil {
-			return err
-		}
-		Volume, err := pk.UnpackFloat(r)
-		if err != nil {
-			return err
-		}
-		Pitch, err := pk.UnpackFloat(r)
-		if err != nil {
-			return err
-		}
-		g.soundCallBack(SoundID, SoundCategory, float64(x)/8, float64(y)/8, float64(z)/8, Volume, Pitch)
+	SoundID, err := pk.UnpackVarInt(r)
+	if err != nil {
+		return err
 	}
+	SoundCategory, err := pk.UnpackVarInt(r)
+	if err != nil {
+		return err
+	}
+
+	x, err := pk.UnpackInt32(r)
+	if err != nil {
+		return err
+	}
+	y, err := pk.UnpackInt32(r)
+	if err != nil {
+		return err
+	}
+	z, err := pk.UnpackInt32(r)
+	if err != nil {
+		return err
+	}
+	Volume, err := pk.UnpackFloat(r)
+	if err != nil {
+		return err
+	}
+	Pitch, err := pk.UnpackFloat(r)
+	if err != nil {
+		return err
+	}
+	g.events <- SoundEffectEvent{SoundID, SoundCategory, float64(x) / 8, float64(y) / 8, float64(z) / 8, Volume, Pitch}
 
 	return nil
 }
