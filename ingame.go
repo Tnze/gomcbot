@@ -139,7 +139,7 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		err = handleHeldItemPacket(g, reader)
 	case 0x22:
 		err = handleChunkDataPacket(g, p)
-		g.events <- BlockChangeEvent(false)
+		g.events <- BlockChangeEvent{}
 	case 0x32:
 		err = handlePlayerPositionAndLookPacket(g, reader)
 		sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
@@ -165,10 +165,10 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		err = handleChatMessagePacket(g, reader)
 	case 0x0B:
 		err = handleBlockChangePacket(g, reader)
-		g.events <- BlockChangeEvent(true)
+		g.events <- BlockChangeEvent{}
 	case 0x0F:
 		err = handleMultiBlockChangePacket(g, reader)
-		g.events <- BlockChangeEvent(false)
+		g.events <- BlockChangeEvent{}
 	case 0x1B:
 		// should assumes that the server has already closed the connection by the time the packet arrives.
 		g.events <- DisconnectEvent{Text: "disconnect"}
@@ -343,7 +343,7 @@ func handleUpdateHealthPacket(g *Game, r *bytes.Reader) (err error) {
 	}
 
 	if g.player.Health < 1 { //player is dead
-		g.events <- PlayerDeadEvent(int(g.player.Health)) //Dead event
+		g.events <- PlayerDeadEvent{} //Dead event
 		sendPlayerPositionAndLookPacket(g)
 		time.Sleep(time.Second * 2)  //wait for 2 sec make it more like a human
 		sendClientStatusPacket(g, 0) //status 0 means perform respawn
@@ -503,7 +503,7 @@ func handlePlayerPositionAndLookPacket(g *Game, r *bytes.Reader) error {
 
 	//handle PlayerSpawnEvent
 	if !isSpawn {
-		g.events <- PlayerSpawnEvent(isSpawn)
+		g.events <- PlayerSpawnEvent{}
 		isSpawn = true
 	}
 	return nil
