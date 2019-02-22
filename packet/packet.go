@@ -124,7 +124,7 @@ func PackBoolean(b bool) byte {
 }
 
 //ReadNBytes read N bytes from bytes.Reader
-func ReadNBytes(b *bytes.Reader, n int) (bs []byte, err error) {
+func ReadNBytes(b io.ByteReader, n int) (bs []byte, err error) {
 	bs = make([]byte, n)
 	for i := 0; i < n; i++ {
 		bs[i], err = b.ReadByte()
@@ -136,7 +136,7 @@ func ReadNBytes(b *bytes.Reader, n int) (bs []byte, err error) {
 }
 
 //UnpackString 读取一个字符串
-func UnpackString(b *bytes.Reader) (s string, err error) {
+func UnpackString(b io.ByteReader) (s string, err error) {
 	l, err := UnpackVarInt(b)
 	if err != nil {
 		return "", err
@@ -148,7 +148,7 @@ func UnpackString(b *bytes.Reader) (s string, err error) {
 }
 
 //UnpackVarInt 读取一个VarInt
-func UnpackVarInt(b *bytes.Reader) (int32, error) {
+func UnpackVarInt(b io.ByteReader) (int32, error) {
 	var n uint
 	for i := 0; i < 5; i++ { //读数据前的长度标记
 		sec, err := b.ReadByte()
@@ -166,7 +166,7 @@ func UnpackVarInt(b *bytes.Reader) (int32, error) {
 }
 
 //UnpackInt16 读取一个16位有符号整数
-func UnpackInt16(b *bytes.Reader) (int16, error) {
+func UnpackInt16(b io.ByteReader) (int16, error) {
 	bs, err := ReadNBytes(b, 2)
 	if err != nil {
 		return 0, err
@@ -175,7 +175,7 @@ func UnpackInt16(b *bytes.Reader) (int16, error) {
 }
 
 //UnpackInt32 读取一个32位有符号整数
-func UnpackInt32(b *bytes.Reader) (int32, error) {
+func UnpackInt32(b io.ByteReader) (int32, error) {
 	bs, err := ReadNBytes(b, 4)
 	if err != nil {
 		return 0, err
@@ -184,7 +184,7 @@ func UnpackInt32(b *bytes.Reader) (int32, error) {
 }
 
 //UnpackInt64 读取一个64位有符号整数
-func UnpackInt64(b *bytes.Reader) (int64, error) {
+func UnpackInt64(b io.ByteReader) (int64, error) {
 	bs, err := ReadNBytes(b, 8)
 	if err != nil {
 		return 0, err
@@ -194,7 +194,7 @@ func UnpackInt64(b *bytes.Reader) (int64, error) {
 }
 
 // UnpackPosition 读取一个位置
-func UnpackPosition(b *bytes.Reader) (x, y, z int, err error) {
+func UnpackPosition(b io.ByteReader) (x, y, z int, err error) {
 	position, err := UnpackInt64(b)
 
 	x = int(position >> 38)
@@ -215,13 +215,13 @@ func UnpackPosition(b *bytes.Reader) (x, y, z int, err error) {
 }
 
 // UnpackFloat 读取一个单精度浮点数
-func UnpackFloat(b *bytes.Reader) (float32, error) {
+func UnpackFloat(b io.ByteReader) (float32, error) {
 	n, err := UnpackInt32(b)
 	return math.Float32frombits(uint32(n)), err
 }
 
 // UnpackDouble 读取一个双精度浮点数
-func UnpackDouble(b *bytes.Reader) (float64, error) {
+func UnpackDouble(b io.ByteReader) (float64, error) {
 	n, err := UnpackInt64(b)
 	return math.Float64frombits(uint64(n)), err
 }
