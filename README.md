@@ -29,7 +29,7 @@ These're what gomcbot can do and what can't do yet
 - [ ] Record entity
 - [ ] Unload chunks
 
-> I'm writing a mine robot so this list will be complete later. Create an issue if you want one of them.
+> Talk to me if you want one of unrealized function.
 # Usage
 There are some basic usage example. For more information, see [Wiki](https://github.com/Tnze/gomcbot/wiki).
 
