@@ -1,7 +1,6 @@
 package packet
 
 import (
-	"bufio"
 	"bytes"
 	"compress/zlib"
 	"fmt"
@@ -227,10 +226,10 @@ func UnpackDouble(b io.ByteReader) (float64, error) {
 }
 
 // RecvPacket recive a packet from server
-func RecvPacket(s *bufio.Reader, useZlib bool) (*Packet, error) {
+func RecvPacket(r io.ByteReader, useZlib bool) (*Packet, error) {
 	var len int
 	for i := 0; i < 5; i++ { //读数据前的长度标记
-		b, err := s.ReadByte()
+		b, err := r.ReadByte()
 		if err != nil {
 			return nil, fmt.Errorf("read len of packet fail: %v", err)
 		}
@@ -247,7 +246,7 @@ func RecvPacket(s *bufio.Reader, useZlib bool) (*Packet, error) {
 	data := make([]byte, len) //读包内容
 	var err error
 	for i := 0; i < len; i++ {
-		data[i], err = s.ReadByte()
+		data[i], err = r.ReadByte()
 		if err != nil {
 			return nil, fmt.Errorf("read content of packet fail: %v", err)
 		}
