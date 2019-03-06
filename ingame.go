@@ -174,7 +174,7 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 		g.events <- DisconnectEvent{Text: "disconnect"}
 		err = fmt.Errorf("disconnect")
 	case 0x17:
-		err = handleSetSlotPacket(g, reader)
+	// 	err = handleSetSlotPacket(g, reader)
 	case 0x4D:
 		err = handleSoundEffect(g, reader)
 	default:

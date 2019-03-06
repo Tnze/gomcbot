@@ -10,7 +10,7 @@ These're what gomcbot can do and what can't do yet
 - [x] Join online server
 - [x] Join offline server
 - [x] Parse chunk data
-- [x] View inventory
+- [ ] View inventory
 - [x] Use item
 - [x] Listening sound
 - [x] Send chat message
