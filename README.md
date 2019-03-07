@@ -1,9 +1,11 @@
 # GoMCbot
-A golang minecraft robot package
-[![GoDoc](https://godoc.org/github.com/Tnze/gomcbot?status.svg)](https://godoc.org/github.com/Tnze/gomcbot)
+A golang minecraft robot package.
 
 - Current Version: `1.13.2`  
 - Protocol Version: `404`
+
+[![GoDoc](https://godoc.org/github.com/Tnze/gomcbot?status.svg)](https://godoc.org/github.com/Tnze/gomcbot)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Tnze/gomcbot)](https://goreportcard.com/report/github.com/Tnze/gomcbot)
 
 ## What can it do
 GoMCbot play a role in a Minecraft Client which has no graphy but you can control it by programing.
