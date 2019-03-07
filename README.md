@@ -1,5 +1,6 @@
 # GoMCbot
 A golang minecraft robot package
+[![GoDoc](https://godoc.org/github.com/Tnze/gomcbot?status.svg)](https://godoc.org/github.com/Tnze/gomcbot)
 
 - Current Version: `1.13.2`  
 - Protocol Version: `404`
