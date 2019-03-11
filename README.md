@@ -119,11 +119,12 @@ func main() {
 package main
 
 import (
+	"fmt"
 	bot "github.com/Tnze/gomcbot"
 )
 
 func main() {
-	p := mb.Auth{
+	p := bot.Auth{
 		Name: "YourGameName",
 		UUID: "YourUUID",
 	}
