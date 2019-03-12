@@ -15,7 +15,7 @@ func ExamplePingAndList() {
 	fmt.Println(resp)
 }
 
-func ExampleJoinOfflineServer() {
+func Example_joinOfflineServer() {
 	Auth := bot.Auth{
 		Name: "Steve",
 	}
@@ -37,7 +37,7 @@ func ExampleJoinOfflineServer() {
 	}
 }
 
-func ExampleJoinOnlineServer() {
+func Example_joinOnlineServer() {
 	//Login
 
 	// This is the basic authenticate function.
