@@ -1,8 +1,9 @@
 # GoMCbot
 A golang minecraft robot package.
 
-- Current Version: `1.13.2`  
-- Protocol Version: `404`
+- Current Version: `1.14`  
+- Protocol Version: `477`
+> **Waring**: this version is not yet available
 
 [![GoDoc](https://godoc.org/github.com/Tnze/gomcbot?status.svg)](https://godoc.org/github.com/Tnze/gomcbot)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Tnze/gomcbot)](https://goreportcard.com/report/github.com/Tnze/gomcbot)
@@ -10,17 +11,17 @@ A golang minecraft robot package.
 ## What can it do
 GoMCbot play a role in a Minecraft Client which has no graphy but you can control it by programing.
 These're what gomcbot can do and what can't do yet
-- [x] Join online server
-- [x] Join offline server
-- [x] Parse chunk data
+- [ ] Join online server
+- [ ] Join offline server
+- [ ] Parse chunk data
 - [ ] View inventory
-- [x] Use item
-- [x] Listening sound
-- [x] Send chat message
-- [x] Recive and **parse** chat message
-- [x] Move around and look around
-- [x] Swing hands
-- [x] Mine blocks
+- [ ] Use item
+- [ ] Listening sound
+- [ ] Send chat message
+- [ ] Recive and parse chat message
+- [ ] Move around and look around
+- [ ] Swing hands
+- [ ] Mine blocks
 - [ ] Place blocks
 - [ ] Steer vehicle
 - [ ] Steer boat
