@@ -29,11 +29,12 @@ func DialMC(addr string) (conn *Conn, err error) {
 	return
 }
 
-func (c *Conn) ReadPacket() (*pk.Packet, error) {
-	return pk.RecvPacket(c.ByteReader, c.threshold > 0)
+func (c *Conn) ReadPacket() (pk.Packet, error) {
+	pk, err := pk.RecvPacket(c.ByteReader, c.threshold > 0)
+	return *pk, err
 }
 
-func (c *Conn) WritePacket(p *pk.Packet) error {
+func (c *Conn) WritePacket(p pk.Packet) error {
 	_, err := c.Write(p.Pack(c.threshold))
 	return err
 }

@@ -3,13 +3,11 @@ package gomcbot
 import (
 	"bufio"
 	"bytes"
-	"crypto/cipher"
 	"fmt"
-	"io"
 	"net"
 
 	"github.com/Tnze/gomcbot/network"
-	pk "github.com/Tnze/gomcbot/packet"
+	pk "github.com/Tnze/gomcbot/network/packet"
 )
 
 //ProtocalVersion is the protocal version
@@ -26,24 +24,25 @@ func PingAndList(addr string) (string, error) {
 	}
 
 	//握手
-	hsPacket := newHandshakePacket(ProtocalVersion, addr, port, 1)
-	_, err = conn.WritePacket(hsPacket)
+	_, err = conn.WritePacket(pk.NewPacket(
+		0x00,                       //Handshake packet ID
+		pk.VarInt(ProtocalVersion), //Protocal version
+		pk.String(addr),            //Server's address
+		pk.UnsignedShort(port),
+		pk.Byte(1),
+	))
 	if err != nil {
 		return "", fmt.Errorf("send handshake packect fail: %v", err)
 	}
 
 	//请求服务器状态
-	reqPacket := pk.Packet{
-		ID:   0,
-		Data: []byte{},
-	}
-	_, err = conn.Write(reqPacket.Pack(-1))
+	_, err = conn.WritePacket(pk.NewPacket(0))
 	if err != nil {
 		return "", fmt.Errorf("send list packect fail: %v", err)
 	}
 
 	//服务器返回状态
-	recv, err := pk.RecvPacket(bufio.NewReader(conn), false)
+	recv, err := conn.ReadPacket()
 	if err != nil {
 		return "", fmt.Errorf("recv list packect fail: %v", err)
 	}
@@ -52,7 +51,7 @@ func PingAndList(addr string) (string, error) {
 }
 
 // JoinServer connect a Minecraft server for playing the game.
-func JoinServer(addr string, port int, auth *Auth) (g *Clint, err error) {
+func JoinServer(addr string, port int, auth *Auth) (g *Client, err error) {
 	//连接
 	g = new(Game)
 	g.conn, err = net.Dial("tcp", fmt.Sprintf("%s:%d", addr, port))

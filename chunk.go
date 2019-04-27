@@ -3,7 +3,7 @@ package gomcbot
 import (
 	"bytes"
 	"fmt"
-	pk "github.com/Tnze/gomcbot/packet"
+	pk "github.com/Tnze/gomcbot/network/packet"
 	"io"
 )
 

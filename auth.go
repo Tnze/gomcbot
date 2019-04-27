@@ -1,5 +1,7 @@
 package gomcbot
 
+import pk "github.com/Tnze/gomcbot/network/packet"
+
 // Auth includes a account
 type Auth struct {
 	Name string
@@ -8,7 +10,7 @@ type Auth struct {
 }
 
 // 加密请求
-func handleEncryptionRequest(g *Game, pack *pk.Packet, auth *Auth) error {
+func handleEncryptionRequest(g *Client, pack *pk.Packet, auth *Auth) error {
 	//创建AES对称加密密钥
 	key, encoStream, decoStream := newSymmetricEncryption()
 

@@ -3,7 +3,7 @@ package gomcbot
 import (
 	"bytes"
 	"fmt"
-	pk "github.com/Tnze/gomcbot/packet"
+	pk "github.com/Tnze/gomcbot/network/packet"
 	"math"
 	"time"
 )
@@ -17,8 +17,8 @@ type Player struct {
 	Yaw, Pitch float32
 	OnGround   bool
 
-	HeldItem  int //拿着的物品栏位
-	Inventory []Solt
+	HeldItem int //拿着的物品栏位
+	// Inventory []Solt
 
 	Health         float32 //血量
 	Food           int32   //饱食度
@@ -66,7 +66,7 @@ type Position struct {
 
 // HandleGame recive server packet and response them correctly.
 // Note that HandleGame will block if you don't recive from Events.
-func (g *Game) HandleGame() error {
+func (g *Client) HandleGame() error {
 	defer func() {
 		close(g.events)
 	}()
@@ -120,7 +120,7 @@ func (g *Game) HandleGame() error {
 	}
 }
 
-func handlePack(g *Game, p *pk.Packet) (err error) {
+func handlePack(g *Client, p *pk.Packet) (err error) {
 	reader := bytes.NewReader(p.Data)
 
 	switch p.ID {
@@ -183,7 +183,7 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 	return
 }
 
-func handleSoundEffect(g *Game, r *bytes.Reader) error {
+func handleSoundEffect(g *Client, r *bytes.Reader) error {
 	SoundID, err := pk.UnpackVarInt(r)
 	if err != nil {
 		return err
@@ -218,7 +218,7 @@ func handleSoundEffect(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleSetSlotPacket(g *Game, r *bytes.Reader) error {
+func handleSetSlotPacket(g *Client, r *bytes.Reader) error {
 	windowID, err := r.ReadByte()
 	if err != nil {
 		return err
@@ -246,7 +246,7 @@ func handleSetSlotPacket(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleMultiBlockChangePacket(g *Game, r *bytes.Reader) error {
+func handleMultiBlockChangePacket(g *Client, r *bytes.Reader) error {
 	if !g.settings.ReciveMap {
 		return nil
 	}
@@ -289,7 +289,7 @@ func handleMultiBlockChangePacket(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleBlockChangePacket(g *Game, r *bytes.Reader) error {
+func handleBlockChangePacket(g *Client, r *bytes.Reader) error {
 	if !g.settings.ReciveMap {
 		return nil
 	}
@@ -309,7 +309,7 @@ func handleBlockChangePacket(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleChatMessagePacket(g *Game, r *bytes.Reader) error {
+func handleChatMessagePacket(g *Client, r *bytes.Reader) error {
 
 	s, err := pk.UnpackString(r)
 	if err != nil {
@@ -328,7 +328,7 @@ func handleChatMessagePacket(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleUpdateHealthPacket(g *Game, r *bytes.Reader) (err error) {
+func handleUpdateHealthPacket(g *Client, r *bytes.Reader) (err error) {
 	g.player.Health, err = pk.UnpackFloat(r)
 	if err != nil {
 		return
@@ -351,7 +351,7 @@ func handleUpdateHealthPacket(g *Game, r *bytes.Reader) (err error) {
 	return
 }
 
-func handleJoinGamePacket(g *Game, r *bytes.Reader) error {
+func handleJoinGamePacket(g *Client, r *bytes.Reader) error {
 	eid, err := pk.UnpackInt32(r)
 	if err != nil {
 		return fmt.Errorf("read EntityID fail: %v", err)
@@ -391,11 +391,11 @@ func handleJoinGamePacket(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handlePluginPacket(g *Game, r *bytes.Reader) {
+func handlePluginPacket(g *Client, r *bytes.Reader) {
 	// fmt.Println("Plugin Packet: ", p)
 }
 
-func handleServerDifficultyPacket(g *Game, r *bytes.Reader) error {
+func handleServerDifficultyPacket(g *Client, r *bytes.Reader) error {
 	diff, err := r.ReadByte()
 	if err != nil {
 		return err
@@ -404,13 +404,13 @@ func handleServerDifficultyPacket(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleSpawnPositionPacket(g *Game, r *bytes.Reader) (err error) {
+func handleSpawnPositionPacket(g *Client, r *bytes.Reader) (err error) {
 	g.Info.SpawnPosition.X, g.Info.SpawnPosition.Y, g.Info.SpawnPosition.Z, err =
 		pk.UnpackPosition(r)
 	return
 }
 
-func handlePlayerAbilitiesPacket(g *Game, r *bytes.Reader) error {
+func handlePlayerAbilitiesPacket(g *Client, r *bytes.Reader) error {
 	f, err := r.ReadByte()
 	if err != nil {
 		return err
@@ -424,7 +424,7 @@ func handlePlayerAbilitiesPacket(g *Game, r *bytes.Reader) error {
 	return err
 }
 
-func handleHeldItemPacket(g *Game, r *bytes.Reader) error {
+func handleHeldItemPacket(g *Client, r *bytes.Reader) error {
 	hi, err := r.ReadByte()
 	if err != nil {
 		return err
@@ -433,7 +433,7 @@ func handleHeldItemPacket(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleChunkDataPacket(g *Game, p *pk.Packet) error {
+func handleChunkDataPacket(g *Client, p *pk.Packet) error {
 	if !g.settings.ReciveMap {
 		return nil
 	}
@@ -445,7 +445,7 @@ func handleChunkDataPacket(g *Game, p *pk.Packet) error {
 
 var isSpawn bool
 
-func handlePlayerPositionAndLookPacket(g *Game, r *bytes.Reader) error {
+func handlePlayerPositionAndLookPacket(g *Client, r *bytes.Reader) error {
 	x, err := pk.UnpackDouble(r)
 	if err != nil {
 		return err
@@ -509,7 +509,7 @@ func handlePlayerPositionAndLookPacket(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleDeclareRecipesPacket(g *Game, r *bytes.Reader) {
+func handleDeclareRecipesPacket(g *Client, r *bytes.Reader) {
 	//Ignore Declare Recipes Packet
 
 	// NumRecipes, index := pk.UnpackVarInt(p.Data)
@@ -524,7 +524,7 @@ func handleDeclareRecipesPacket(g *Game, r *bytes.Reader) {
 	// }
 }
 
-func handleEntityLookAndRelativeMove(g *Game, r *bytes.Reader) error {
+func handleEntityLookAndRelativeMove(g *Client, r *bytes.Reader) error {
 	ID, err := pk.UnpackVarInt(r)
 	if err != nil {
 		return err
@@ -573,11 +573,11 @@ func handleEntityLookAndRelativeMove(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleEntityHeadLookPacket(g *Game, r *bytes.Reader) {
+func handleEntityHeadLookPacket(g *Client, r *bytes.Reader) {
 
 }
 
-func handleEntityRelativeMovePacket(g *Game, r *bytes.Reader) error {
+func handleEntityRelativeMovePacket(g *Client, r *bytes.Reader) error {
 	ID, err := pk.UnpackVarInt(r)
 	if err != nil {
 		return err
@@ -614,17 +614,17 @@ func handleEntityRelativeMovePacket(g *Game, r *bytes.Reader) error {
 	return nil
 }
 
-func handleKeepAlivePacket(g *Game, r *bytes.Reader) (err error) {
+func handleKeepAlivePacket(g *Client, r *bytes.Reader) (err error) {
 	KeepAliveID, err := pk.UnpackInt64(r)
 	sendKeepAlivePacket(g, KeepAliveID)
 	return
 }
 
-func handleEntityPacket(g *Game, r *bytes.Reader) {
+func handleEntityPacket(g *Client, r *bytes.Reader) {
 	// initialize an entity.
 }
 
-func handleSpawnPlayerPacket(g *Game, r *bytes.Reader) (err error) {
+func handleSpawnPlayerPacket(g *Client, r *bytes.Reader) (err error) {
 	np := new(Player)
 	np.entityID, err = pk.UnpackVarInt(r)
 	if err != nil {
@@ -668,7 +668,7 @@ func handleSpawnPlayerPacket(g *Game, r *bytes.Reader) (err error) {
 	return nil
 }
 
-func handleWindowItemsPacket(g *Game, r *bytes.Reader) (err error) {
+func handleWindowItemsPacket(g *Client, r *bytes.Reader) (err error) {
 	WindowID, err := r.ReadByte()
 	if err != nil {
 		return
@@ -695,14 +695,14 @@ func handleWindowItemsPacket(g *Game, r *bytes.Reader) (err error) {
 	return nil
 }
 
-func sendTeleportConfirmPacket(g *Game, TeleportID int32) {
+func sendTeleportConfirmPacket(g *Client, TeleportID int32) {
 	g.sendChan <- pk.Packet{
 		ID:   0x00,
 		Data: pk.PackVarInt(TeleportID),
 	}
 }
 
-func sendPlayerPositionAndLookPacket(g *Game) {
+func sendPlayerPositionAndLookPacket(g *Client) {
 	var data []byte
 	data = append(data, pk.PackDouble(g.player.X)...)
 	data = append(data, pk.PackDouble(g.player.Y)...)
@@ -717,7 +717,7 @@ func sendPlayerPositionAndLookPacket(g *Game) {
 	}
 }
 
-func sendPlayerLookPacket(g *Game) {
+func sendPlayerLookPacket(g *Client) {
 	var data []byte
 	data = append(data, pk.PackFloat(g.player.Yaw)...)
 	data = append(data, pk.PackFloat(g.player.Pitch)...)
@@ -728,7 +728,7 @@ func sendPlayerLookPacket(g *Game) {
 	}
 }
 
-func sendPlayerPositionPacket(g *Game) {
+func sendPlayerPositionPacket(g *Client) {
 	var data []byte
 	data = append(data, pk.PackDouble(g.player.X)...)
 	data = append(data, pk.PackDouble(g.player.Y)...)
@@ -741,14 +741,14 @@ func sendPlayerPositionPacket(g *Game) {
 	}
 }
 
-func sendKeepAlivePacket(g *Game, KeepAliveID int64) {
+func sendKeepAlivePacket(g *Client, KeepAliveID int64) {
 	g.sendChan <- pk.Packet{
 		ID:   0x0E,
 		Data: pk.PackUint64(uint64(KeepAliveID)),
 	}
 }
 
-func sendClientStatusPacket(g *Game, status int32) {
+func sendClientStatusPacket(g *Client, status int32) {
 	data := pk.PackVarInt(status)
 	g.sendChan <- pk.Packet{
 		ID:   0x03,
@@ -757,7 +757,7 @@ func sendClientStatusPacket(g *Game, status int32) {
 }
 
 //hand could be 0: main hand, 1: off hand
-func sendAnimationPacket(g *Game, hand int32) {
+func sendAnimationPacket(g *Client, hand int32) {
 	data := pk.PackVarInt(hand)
 	g.sendChan <- pk.Packet{
 		ID:   0x27,
@@ -765,7 +765,7 @@ func sendAnimationPacket(g *Game, hand int32) {
 	}
 }
 
-func sendPlayerDiggingPacket(g *Game, status int32, x, y, z int, face Face) {
+func sendPlayerDiggingPacket(g *Client, status int32, x, y, z int, face Face) {
 	data := pk.PackVarInt(status)
 	data = append(data, pk.PackPosition(x, y, z)...)
 	data = append(data, byte(face))
@@ -776,7 +776,7 @@ func sendPlayerDiggingPacket(g *Game, status int32, x, y, z int, face Face) {
 	}
 }
 
-func sendUseItemPacket(g *Game, hand int32) {
+func sendUseItemPacket(g *Client, hand int32) {
 	data := pk.PackVarInt(hand)
 	g.sendChan <- pk.Packet{
 		ID:   0x2A,

@@ -1,6 +1,6 @@
 package gomcbot
 
-import pk "github.com/Tnze/gomcbot/packet"
+import pk "github.com/Tnze/gomcbot/network/packet"
 
 // Settings 客户端设置
 type Settings struct {
@@ -49,6 +49,6 @@ func (s *Settings) pack() (p *pk.Packet) {
 }
 
 // Settings set a Settings to Game
-func (g *Game) Settings(set Settings) {
+func (g *Client) Settings(set Settings) {
 	g.settings = set
 }

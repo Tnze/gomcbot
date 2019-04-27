@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-var Int = []int32{0, 1, 2, 127, 128, 255, 2147483647, -1, -2147483648}
+var VarInts = []VarInt{0, 1, 2, 127, 128, 255, 2147483647, -1, -2147483648}
 
-var VarInt = [][]byte{
+var PackedVarInts = [][]byte{
 	[]byte{0x00},
 	[]byte{0x01},
 	[]byte{0x02},
@@ -20,31 +20,21 @@ var VarInt = [][]byte{
 }
 
 func TestPackInt(t *testing.T) {
-	for i, v := range Int {
-		p := PackVarInt(v)
-		if !bytesEqual(p, VarInt[i]) {
-			t.Errorf("pack int %d should be \"% x\" but not \"% x\"", v, VarInt[i], p)
+	for i, v := range VarInts {
+		p := v.Encode()
+		if !bytes.Equal(p, PackedVarInts[i]) {
+			t.Errorf("pack int %d should be \"% x\", get \"% x\"", v, PackedVarInts[i], p)
 		}
 	}
 }
-
-func bytesEqual(a, b []byte) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
-}
-
 func TestUnpackInt(t *testing.T) {
-	for i, v := range VarInt {
-		p, _ := UnpackVarInt(bytes.NewReader(v))
-		if Int[i] != p {
-			t.Errorf("unpack \"% x\" should be %d but not %d", v, Int[i], p)
+	for i, v := range PackedVarInts {
+		var vi VarInt
+		if err := vi.Decode(bytes.NewReader(v)); err != nil {
+			t.Errorf("unpack \"% x\" error: %v", v, err)
+		}
+		if vi != VarInts[i] {
+			t.Errorf("unpack \"% x\" should be %d, get %d", v, VarInts[i], vi)
 		}
 	}
 }
@@ -55,10 +45,16 @@ func TestPositionPack(t *testing.T) {
 	for x := -33554432; x < 33554432; x += 55443 {
 		for y := -2048; y < 2048; y += 48 {
 			for z := -33554432; z < 33554432; z += 55443 {
-				p := PackPosition(x, y, z)
-				x1, y1, z1, _ := UnpackPosition(bytes.NewReader(p))
-				if x1 != x || y1 != y || z1 != z {
-					t.Errorf("cannot pack (%d, %d, %d)", x, y, z)
+				var (
+					pos1 Position
+					pos2 = Position{x, y, z}
+				)
+				if err := pos1.Decode(bytes.NewReader(pos2.Encode())); err != nil {
+					t.Errorf("Position decode fail: %v", err)
+				}
+
+				if pos1 != pos2 {
+					t.Errorf("cannot pack %v", pos2)
 				}
 			}
 		}

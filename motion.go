@@ -7,7 +7,7 @@ import (
 
 // SetPosition method move your character around.
 // Server will ignore this if changes too much.
-func (g *Game) SetPosition(x, y, z float64, onGround bool) {
+func (g *Client) SetPosition(x, y, z float64, onGround bool) {
 	g.motion <- func() {
 		g.player.X, g.player.Y, g.player.Z = x, y, z
 		g.player.OnGround = onGround
@@ -16,7 +16,7 @@ func (g *Game) SetPosition(x, y, z float64, onGround bool) {
 }
 
 // LookAt method turn player's hand and make it look at a point.
-func (g *Game) LookAt(x, y, z float64) {
+func (g *Client) LookAt(x, y, z float64) {
 	x0, y0, z0 := g.player.X, g.player.Y, g.player.Z
 	x, y, z = x-x0, y-y0, z-z0
 
@@ -33,7 +33,7 @@ func (g *Game) LookAt(x, y, z float64) {
 // LookYawPitch set player's hand to the direct by yaw and pitch.
 // yaw can be [0, 360) and pitch can be (-180, 180).
 // if |pitch|>90 the player's hand will be very strange.
-func (g *Game) LookYawPitch(yaw, pitch float32) {
+func (g *Client) LookYawPitch(yaw, pitch float32) {
 	g.motion <- func() {
 		g.player.Yaw, g.player.Pitch = yaw, pitch
 		sendPlayerLookPacket(g) //向服务器更新朝向
@@ -42,7 +42,7 @@ func (g *Game) LookYawPitch(yaw, pitch float32) {
 
 // SwingHand sent when the player's arm swings.
 // if hand is true, swing the main hand
-func (g *Game) SwingHand(hand bool) {
+func (g *Client) SwingHand(hand bool) {
 	if hand {
 		sendAnimationPacket(g, 0)
 	} else {
@@ -51,7 +51,7 @@ func (g *Game) SwingHand(hand bool) {
 }
 
 // Dig a block in the position and wait for it's breaked
-func (g *Game) Dig(x, y, z int) error {
+func (g *Client) Dig(x, y, z int) error {
 	b := g.GetBlock(x, y, z).id
 	sendPlayerDiggingPacket(g, 0, x, y, z, Top) //start
 	sendPlayerDiggingPacket(g, 2, x, y, z, Top) //end
@@ -69,7 +69,7 @@ func (g *Game) Dig(x, y, z int) error {
 
 // UseItem use the item in hand.
 // if hand is true, swing the main hand
-func (g *Game) UseItem(hand bool) {
+func (g *Client) UseItem(hand bool) {
 	if hand {
 		sendUseItemPacket(g, 0)
 	} else {

@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/Tnze/gomcbot/network/CFB8"
-	pk "github.com/Tnze/gomcbot/packet"
+	pk "github.com/Tnze/gomcbot/network/packet"
 )
 
 // authDigest computes a special SHA-1 digest required for Minecraft web

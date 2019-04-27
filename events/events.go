@@ -50,6 +50,6 @@ type SoundEffectEvent struct {
 // GetEvents returns a int type channal.
 // When event happends, a event ID was be sended into this chan
 // Note that HandleGame will block if you don't recive from Events
-func (g *Game) GetEvents() <-chan Event {
+func (g *Client) GetEvents() <-chan Event {
 	return g.events
 }
