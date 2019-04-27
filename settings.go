@@ -1,6 +1,6 @@
 package gomcbot
 
-import pk "github.com/Tnze/gomcbot/network/packet"
+// import pk "github.com/Tnze/gomcbot/network/packet"
 
 // Settings 客户端设置
 type Settings struct {
@@ -37,18 +37,18 @@ var DefaultSettings = Settings{
 	ReciveMap:          true,
 }
 
-func (s *Settings) pack() (p *pk.Packet) {
-	p = new(pk.Packet)
-	p.ID = 0x04
-	p.Data = append(p.Data, pk.PackString(s.Locale)...)
-	p.Data = append(p.Data, byte(s.ViewDistance))
-	p.Data = append(p.Data, pk.PackVarInt(int32(s.ChatMode))...)
-	p.Data = append(p.Data, pk.PackBoolean(s.ChatColors), byte(s.DisplayedSkinParts))
-	p.Data = append(p.Data, pk.PackVarInt(int32(s.MainHand))...)
-	return
-}
+// func (s *Settings) pack() (p *pk.Packet) {
+// 	p = new(pk.Packet)
+// 	p.ID = 0x04
+// 	p.Data = append(p.Data, pk.PackString(s.Locale)...)
+// 	p.Data = append(p.Data, byte(s.ViewDistance))
+// 	p.Data = append(p.Data, pk.PackVarInt(int32(s.ChatMode))...)
+// 	p.Data = append(p.Data, pk.PackBoolean(s.ChatColors), byte(s.DisplayedSkinParts))
+// 	p.Data = append(p.Data, pk.PackVarInt(int32(s.MainHand))...)
+// 	return
+// }
 
 // Settings set a Settings to Game
-func (g *Client) Settings(set Settings) {
-	g.settings = set
-}
+// func (g *Client) Settings(set Settings) {
+// 	g.settings = set
+// }

@@ -8,10 +8,10 @@ import (
 type Client struct {
 	conn *network.Conn
 
-	Info      PlayerInfo
-	abilities PlayerAbilities
-	settings  Settings
-	player    Player
-	wd        world //the map data
+	// Info      PlayerInfo
+	// abilities PlayerAbilities
+	// settings  Settings
+	// player    Player
+	// wd        world //the map data
 
 }

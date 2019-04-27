@@ -6,7 +6,15 @@ import (
 )
 
 type Field interface {
+	FieldEncoder
+	FieldDecoder
+}
+
+type FieldEncoder interface {
 	Encode() []byte
+}
+
+type FieldDecoder interface {
 	Decode(r io.ByteReader) error
 }
 
@@ -54,14 +62,6 @@ type (
 	UUID [16]byte
 )
 
-//Encode a Boolean
-func (b Boolean) Encode() []byte {
-	if b {
-		return []byte{0x01}
-	}
-	return []byte{0x00}
-}
-
 //ReadNBytes read N bytes from bytes.Reader
 func ReadNBytes(r io.ByteReader, n int) (bs []byte, err error) {
 	bs = make([]byte, n)
@@ -72,6 +72,14 @@ func ReadNBytes(r io.ByteReader, n int) (bs []byte, err error) {
 		}
 	}
 	return
+}
+
+//Encode a Boolean
+func (b Boolean) Encode() []byte {
+	if b {
+		return []byte{0x01}
+	}
+	return []byte{0x00}
 }
 
 //Decode a Boolean
@@ -107,6 +115,11 @@ func (s *String) Decode(r io.ByteReader) error {
 
 	*s = String(bs)
 	return nil
+}
+
+//Encode a Byte
+func (b Byte) Encode() []byte {
+	return []byte{byte(b)}
 }
 
 // Encode a Signed Short

@@ -13,7 +13,8 @@ type Packet struct {
 	Data []byte
 }
 
-func NewPacket(ID byte, fields ...Field) (pk Packet) {
+//Marshal generate Packet with the ID and Fields
+func Marshal(ID byte, fields ...FieldEncoder) (pk Packet) {
 	pk.ID = ID
 
 	for _, v := range fields {
@@ -21,6 +22,18 @@ func NewPacket(ID byte, fields ...Field) (pk Packet) {
 	}
 
 	return
+}
+
+//Scan decode the packet and fill data into fields
+func (p Packet) Scan(fields ...FieldDecoder) error {
+	r := bytes.NewReader(p.Data)
+	for _, v := range fields {
+		err := v.Decode(r)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Pack 打包一个数据包

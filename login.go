@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/Tnze/gomcbot/network/CFB8"
+	"github.com/Tnze/gomcbot/network/Packet/pkutil"
 	pk "github.com/Tnze/gomcbot/network/packet"
 )
 
@@ -70,7 +71,7 @@ type request struct {
 	ServerID        string  `json:"serverId"`
 }
 
-func loginAuth(AsTk, name, UUID string, shareSecret []byte, er encryptionRequest) error {
+func loginAuth(AsTk, name, UUID string, shareSecret []byte, er pkutil.EncryptionRequest) error {
 	digest := authDigest(er.ServerID, shareSecret, er.PublicKey)
 
 	client := http.Client{}
@@ -141,9 +142,9 @@ func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp *
 		return
 	}
 	var data []byte
-	data = append(data, pk.PackVarInt(int32(len(cryptPK)))...)
+	data = append(data, pk.VarInt(int32(len(cryptPK))).Encode()...)
 	data = append(data, cryptPK...)
-	data = append(data, pk.PackVarInt(int32(len(verifyT)))...)
+	data = append(data, pk.VarInt(int32(len(verifyT))).Encode()...)
 	data = append(data, verifyT...)
 	erp = &pk.Packet{
 		ID:   0x01,
