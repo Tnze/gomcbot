@@ -1,4 +1,4 @@
-package gomcbot
+package events
 
 //Event happends in game and you can recive it from what Game.GetEvent() returns
 type Event interface{}

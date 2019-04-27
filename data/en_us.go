@@ -1,4 +1,4 @@
-package gomcbot
+package data
 
 // When update this data, replace "%[0-9]$s" with "%[0-9]s"
 var enUs = map[string]string{

@@ -126,40 +126,40 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 	switch p.ID {
 	case 0x25:
 		err = handleJoinGamePacket(g, reader)
-	case 0x19:
+	case 0x18:
 		handlePluginPacket(g, reader)
 	case 0x0D:
 		err = handleServerDifficultyPacket(g, reader)
-	case 0x49:
+	case 0x4D:
 		err = handleSpawnPositionPacket(g, reader)
-	case 0x2E:
+	case 0x31:
 		err = handlePlayerAbilitiesPacket(g, reader)
 		g.sendChan <- *g.settings.pack()
-	case 0x3D:
+	case 0x3F:
 		err = handleHeldItemPacket(g, reader)
-	case 0x22:
+	case 0x21:
 		err = handleChunkDataPacket(g, p)
 		g.events <- BlockChangeEvent{}
-	case 0x32:
+	case 0x35:
 		err = handlePlayerPositionAndLookPacket(g, reader)
 		sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
-	case 0x54:
+	case 0x5A:
 		// handleDeclareRecipesPacket(g, reader)
 	case 0x29:
 		// err = handleEntityLookAndRelativeMove(g, reader)
-	case 0x39:
+	case 0x3B:
 		// handleEntityHeadLookPacket(g, reader)
 	case 0x28:
 		// err = handleEntityRelativeMovePacket(g, reader)
-	case 0x21:
+	case 0x20:
 		err = handleKeepAlivePacket(g, reader)
-	case 0x27:
+	case 0x2B:
 		//handleEntityPacket(g, reader)
 	case 0x05:
 		// err = handleSpawnPlayerPacket(g, reader)
-	case 0x15:
+	case 0x2E:
 		err = handleWindowItemsPacket(g, reader)
-	case 0x44:
+	case 0x48:
 		err = handleUpdateHealthPacket(g, reader)
 	case 0x0E:
 		err = handleChatMessagePacket(g, reader)
@@ -169,14 +169,14 @@ func handlePack(g *Game, p *pk.Packet) (err error) {
 	case 0x0F:
 		err = handleMultiBlockChangePacket(g, reader)
 		g.events <- BlockChangeEvent{}
-	case 0x1B:
+	case 0x1A:
 		// should assumes that the server has already closed the connection by the time the packet arrives.
 		g.events <- DisconnectEvent{Text: "disconnect"}
 		err = fmt.Errorf("disconnect")
-	case 0x17:
+	case 0x16:
 	// 	err = handleSetSlotPacket(g, reader)
-	case 0x4D:
-		err = handleSoundEffect(g, reader)
+	case 0x51:
+		// err = handleSoundEffect(g, reader)
 	default:
 		// fmt.Printf("ignore pack id %X\n", p.ID)
 	}

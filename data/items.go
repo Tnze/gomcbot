@@ -1,4 +1,4 @@
-package gomcbot
+package data
 
 import "encoding/json"
 

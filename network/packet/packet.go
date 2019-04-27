@@ -197,8 +197,8 @@ func UnpackPosition(b io.ByteReader) (x, y, z int, err error) {
 	position, err := UnpackInt64(b)
 
 	x = int(position >> 38)
-	y = int((position >> 26) & 0xFFF)
-	z = int(position << 38 >> 38)
+	y = int(position & 0xFFF)
+	z = int(position << 26 >> 38)
 
 	//处理负数
 	if x >= 1<<25 {
