@@ -1,46 +1,59 @@
-package gomcbot
+package gomcbot_test
 
 import (
-	// "./util"
-	// "fmt"
+	"fmt"
 	"testing"
 	// "time"
+
+	bot "github.com/Tnze/gomcbot"
+	auth "github.com/Tnze/gomcbot/util/authenticate"
 )
 
 func TestPingAndList(t *testing.T) {
-	resp, err := PingAndList("jdao.online", 25566)
+	resp, err := bot.PingAndList("jdao.online", 25566)
 	if err != nil {
 		t.Errorf("ping and list server fail: %v", err)
 	}
 	t.Log("Status:" + resp)
 }
 
-// func TestJoinServerOffline(t *testing.T) {
-// 	p := Auth{
-// 		Name: "Name",
-// 		UUID: "UUID",
-// 		AsTk: "",
-// 	}
-// 	g, err := p.JoinServer("jdao.online", 25565)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	fmt.Println("Login success")
-// 	events := g.GetEvents()
-// 	go g.HandleGame()
+func TestJoinServerOffline(t *testing.T) {
+	c := bot.NewClient()
 
-// 	for e := range events {
-// 		switch e.(type) {
-// 		case PlayerSpawnEvent:
-// 			fmt.Println("Player Spawn")
-// 		case PlayerDeadEvent:
-// 			fmt.Println("Player Dead")
-// 		case InventoryChangeEvent:
-// 			fmt.Println("Inventory Change")
-// 		case BlockChangeEvent:
+	err := c.JoinServer("jdao.online", 25566)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println("Login success")
+}
 
-// 		default:
-// 			// fmt.Println(e)
-// 		}
-// 	}
-// }
+func TestJoinOnlineServer(t *testing.T) {
+	c := bot.NewClient()
+	//Login
+
+	// This is the basic authenticate function.
+	// Maybe you could get more control of login process by using
+	// https://github.com/JoshuaDoes/go-yggdrasil.
+	resp, err := auth.Authenticate("email", "password")
+	if err != nil {
+		panic(err)
+	}
+	c.Auth = resp.ToAuth()
+
+	//Join server
+	err = c.JoinServer("localhost", 25565)
+	if err != nil {
+		panic(err)
+	}
+
+	//Handle game
+	// events := game.GetEvents()
+	// go game.HandleGame()
+
+	// for e := range events { //Reciving events
+	// 	switch e.(type) {
+	// 	case bot.PlayerSpawnEvent:
+	// 		fmt.Println("Player is spawned!")
+	// 	}
+	// }
+}

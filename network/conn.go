@@ -2,6 +2,7 @@ package network
 
 import (
 	"bufio"
+	"crypto/cipher"
 	"io"
 	"net"
 
@@ -37,4 +38,20 @@ func (c *Conn) ReadPacket() (pk.Packet, error) {
 func (c *Conn) WritePacket(p pk.Packet) error {
 	_, err := c.Write(p.Pack(c.threshold))
 	return err
+}
+
+func (c *Conn) SetCipher(encoStream, decoStream cipher.Stream) {
+	//加密连接
+	c.ByteReader = bufio.NewReader(cipher.StreamReader{ //Set reciver for AES
+		S: decoStream,
+		R: c.socket,
+	})
+	c.Writer = cipher.StreamWriter{
+		S: encoStream,
+		W: c.socket,
+	}
+}
+
+func (c *Conn) SetThreshold(t int) {
+	c.threshold = t
 }

@@ -47,8 +47,3 @@ var DefaultSettings = Settings{
 // 	p.Data = append(p.Data, pk.PackVarInt(int32(s.MainHand))...)
 // 	return
 // }
-
-// Settings set a Settings to Game
-// func (g *Client) Settings(set Settings) {
-// 	g.settings = set
-// }

@@ -1,9 +1,9 @@
-package gomcbot_test
+package cmd
 
 import (
 	"fmt"
 	bot "github.com/Tnze/gomcbot"
-	auth "github.com/Tnze/gomcbot/authenticate"
+	auth "github.com/Tnze/gomcbot/util/authenticate"
 )
 
 func ExamplePingAndList() {
@@ -16,28 +16,27 @@ func ExamplePingAndList() {
 }
 
 func Example_joinOfflineServer() {
-	Auth := bot.Auth{
-		Name: "Steve",
-	}
-	//Join server
-	game, err := Auth.JoinServer("localhost", 25565)
+	c := bot.NewClient()
+
+	err := c.JoinServer("jdao.online", 25566)
 	if err != nil {
 		panic(err)
 	}
 
 	//Handle game
-	events := game.GetEvents()
-	go game.HandleGame()
+	// events := game.GetEvents()
+	// go game.HandleGame()
 
-	for e := range events { //Reciving events
-		switch e.(type) {
-		case bot.PlayerSpawnEvent:
-			fmt.Println("Player is spawned!")
-		}
-	}
+	// for e := range events { //Reciving events
+	// 	switch e.(type) {
+	// 	case bot.PlayerSpawnEvent:
+	// 		fmt.Println("Player is spawned!")
+	// 	}
+	// }
 }
 
 func Example_joinOnlineServer() {
+	c := bot.NewClient()
 	//Login
 
 	// This is the basic authenticate function.
@@ -47,22 +46,22 @@ func Example_joinOnlineServer() {
 	if err != nil {
 		panic(err)
 	}
-	Auth := resp.ToAuth()
+	c.Auth = resp.ToAuth()
 
 	//Join server
-	game, err := Auth.JoinServer("localhost", 25565)
+	err = c.JoinServer("localhost", 25565)
 	if err != nil {
 		panic(err)
 	}
 
 	//Handle game
-	events := game.GetEvents()
-	go game.HandleGame()
+	// events := game.GetEvents()
+	// go game.HandleGame()
 
-	for e := range events { //Reciving events
-		switch e.(type) {
-		case bot.PlayerSpawnEvent:
-			fmt.Println("Player is spawned!")
-		}
-	}
+	// for e := range events { //Reciving events
+	// 	switch e.(type) {
+	// 	case bot.PlayerSpawnEvent:
+	// 		fmt.Println("Player is spawned!")
+	// 	}
+	// }
 }

@@ -10,14 +10,88 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/Tnze/gomcbot/network/CFB8"
-	"github.com/Tnze/gomcbot/network/Packet/pkutil"
 	pk "github.com/Tnze/gomcbot/network/packet"
 )
+
+// Auth includes a account
+type Auth struct {
+	Name string
+	UUID string
+	AsTk string
+}
+
+// 加密请求
+func handleEncryptionRequest(c *Client, pack pk.Packet) error {
+	//创建AES对称加密密钥
+	key, encoStream, decoStream := newSymmetricEncryption()
+
+	//解析EncryptionRequest包
+	var er encryptionRequest
+	if err := pack.Scan(&er); err != nil {
+		return err
+	}
+	err := loginAuth(c.AsTk, c.Name, c.UUID, key, er) //向Mojang验证
+	if err != nil {
+		return fmt.Errorf("login fail: %v", err)
+	}
+
+	// 响应加密请求
+	var p pk.Packet // Encryption Key Response
+	p, err = genEncryptionKeyResponse(key, er.PublicKey, er.VerifyToken)
+	if err != nil {
+		return fmt.Errorf("gen encryption key response fail: %v", err)
+	}
+	err = c.conn.WritePacket(p)
+	if err != nil {
+		return err
+	}
+
+	// 设置连接加密
+	c.conn.SetCipher(encoStream, decoStream)
+	return nil
+}
+
+type encryptionRequest struct {
+	ServerID    string
+	PublicKey   []byte
+	VerifyToken []byte
+}
+
+func (e *encryptionRequest) Decode(r io.ByteReader) error {
+	var serverID pk.String
+	if err := serverID.Decode(r); err != nil {
+		return err
+	}
+
+	var publicKeyLength, verifyTokenLength pk.VarInt
+
+	if err := publicKeyLength.Decode(r); err != nil {
+		return err
+	}
+	publicKey, err := pk.ReadNBytes(r, int(publicKeyLength))
+	if err != nil {
+		return err
+	}
+
+	if err := verifyTokenLength.Decode(r); err != nil {
+		return err
+	}
+	verifyToken, err := pk.ReadNBytes(r, int(verifyTokenLength))
+	if err != nil {
+		return err
+	}
+
+	e.ServerID = string(serverID)
+	e.PublicKey = publicKey
+	e.VerifyToken = verifyToken
+	return nil
+}
 
 // authDigest computes a special SHA-1 digest required for Minecraft web
 // authentication on Premium servers (online-mode=true).
@@ -71,7 +145,7 @@ type request struct {
 	ServerID        string  `json:"serverId"`
 }
 
-func loginAuth(AsTk, name, UUID string, shareSecret []byte, er pkutil.EncryptionRequest) error {
+func loginAuth(AsTk, name, UUID string, shareSecret []byte, er encryptionRequest) error {
 	digest := authDigest(er.ServerID, shareSecret, er.PublicKey)
 
 	client := http.Client{}
@@ -123,8 +197,7 @@ func newSymmetricEncryption() (key []byte, encoStream, decoStream cipher.Stream)
 	return
 }
 
-func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp *pk.Packet, err error) {
-
+func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp pk.Packet, err error) {
 	iPK, err := x509.ParsePKIXPublicKey(publicKey) // Decode Public Key
 	if err != nil {
 		err = fmt.Errorf("decode public key fail: %v", err)
@@ -146,7 +219,7 @@ func genEncryptionKeyResponse(shareSecret, publicKey, verifyToken []byte) (erp *
 	data = append(data, cryptPK...)
 	data = append(data, pk.VarInt(int32(len(verifyT))).Encode()...)
 	data = append(data, verifyT...)
-	erp = &pk.Packet{
+	erp = pk.Packet{
 		ID:   0x01,
 		Data: data,
 	}
