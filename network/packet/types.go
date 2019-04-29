@@ -122,6 +122,11 @@ func (b Byte) Encode() []byte {
 	return []byte{byte(b)}
 }
 
+//Encode a UnsignedByte
+func (ub UnsignedByte) Encode() []byte {
+	return []byte{byte(ub)}
+}
+
 // Encode a Signed Short
 func (s Short) Encode() []byte {
 	n := uint16(s)

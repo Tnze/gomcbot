@@ -10,7 +10,7 @@ import (
 )
 
 func TestPingAndList(t *testing.T) {
-	resp, err := bot.PingAndList("jdao.online", 25566)
+	resp, err := bot.PingAndList("localhost", 25565)
 	if err != nil {
 		t.Errorf("ping and list server fail: %v", err)
 	}
@@ -20,7 +20,7 @@ func TestPingAndList(t *testing.T) {
 func TestJoinServerOffline(t *testing.T) {
 	c := bot.NewClient()
 
-	err := c.JoinServer("jdao.online", 25566)
+	err := c.JoinServer("localhost", 25565)
 	if err != nil {
 		t.Fatal(err)
 	}

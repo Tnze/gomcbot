@@ -1,34 +1,13 @@
 package gomcbot
 
-// import (
-// 	"bytes"
-// 	"fmt"
-// 	pk "github.com/Tnze/gomcbot/network/packet"
-// 	"math"
-// 	"time"
-// )
-
-// // Player includes the player's status.
-// type Player struct {
-// 	entityID int32
-// 	UUID     [2]int64 //128bit UUID
-
-// 	X, Y, Z    float64
-// 	Yaw, Pitch float32
-// 	OnGround   bool
-
-// 	HeldItem int //拿着的物品栏位
-// 	// Inventory []Solt
-
-// 	Health         float32 //血量
-// 	Food           int32   //饱食度
-// 	FoodSaturation float32 //食物饱和度
-// }
-
-// //EntityID get player's entity ID.
-// func (p *Player) EntityID() int32 {
-// 	return p.entityID
-// }
+import (
+	// "bytes"
+	"fmt"
+	"github.com/Tnze/gomcbot/data"
+	pk "github.com/Tnze/gomcbot/network/packet"
+	// "math"
+	// "time"
+)
 
 // //GetPosition return the player's position
 // func (p *Player) GetPosition() (x, y, z float64) {
@@ -64,124 +43,94 @@ package gomcbot
 // 	X, Y, Z int
 // }
 
-// // HandleGame recive server packet and response them correctly.
-// // Note that HandleGame will block if you don't recive from Events.
-// func (g *Client) HandleGame() error {
-// 	defer func() {
-// 		close(g.events)
-// 	}()
+// HandleGame recive server packet and response them correctly.
+// Note that HandleGame will block if you don't recive from Events.
+func (c *Client) HandleGame() error {
+	for {
+		//Read packets
+		p, err := c.conn.ReadPacket()
+		if err != nil {
+			return fmt.Errorf("bot: read packet fail: %v", err)
+		}
+		//handle packets
+		err = c.handlePacket(p)
+		if err != nil {
+			return fmt.Errorf("handle packet 0x%X error: %v", p.ID, err)
+		}
+	}
+}
 
-// 	errChan := make(chan error)
-
-// 	//send
-// 	g.sendChan = make(chan pk.Packet, 64)
-// 	go func() {
-// 		for p := range g.sendChan {
-// 			err := g.sendPacket(&p)
-// 			if err != nil {
-// 				errChan <- fmt.Errorf("send packet in game fail: %v", err)
-// 				return
-// 			}
-// 		}
-// 	}()
-
-// 	//recv
-// 	g.recvChan = make(chan *pk.Packet, 64)
-// 	go func() {
-// 		for {
-// 			pack, err := g.recvPacket()
-// 			if err != nil {
-// 				close(g.recvChan)
-// 				errChan <- fmt.Errorf("recv packet in game fail: %v", err)
-// 				return
-// 			}
-
-// 			g.recvChan <- pack
-// 		}
-// 	}()
-
-// 	for {
-// 		select {
-// 		case err := <-errChan:
-// 			close(g.sendChan)
-// 			return err
-// 		case pack, ok := <-g.recvChan:
-// 			if !ok {
-// 				break
-// 			}
-// 			err := handlePack(g, pack)
-// 			if err != nil {
-// 				// fmt.Println(fmt.Errorf("handle packet 0x%X error: %v", pack.ID, err))
-// 				return fmt.Errorf("handle packet 0x%X error: %v", pack.ID, err)
-// 			}
-// 		case motion := <-g.motion:
-// 			motion()
-// 		}
-// 	}
-// }
-
-// func handlePack(g *Client, p *pk.Packet) (err error) {
-// 	reader := bytes.NewReader(p.Data)
-
-// 	switch p.ID {
-// 	case 0x25:
-// 		err = handleJoinGamePacket(g, reader)
-// 	case 0x18:
-// 		handlePluginPacket(g, reader)
-// 	case 0x0D:
-// 		err = handleServerDifficultyPacket(g, reader)
-// 	case 0x4D:
-// 		err = handleSpawnPositionPacket(g, reader)
-// 	case 0x31:
-// 		err = handlePlayerAbilitiesPacket(g, reader)
-// 		g.sendChan <- *g.settings.pack()
-// 	case 0x3F:
-// 		err = handleHeldItemPacket(g, reader)
-// 	case 0x21:
-// 		err = handleChunkDataPacket(g, p)
-// 		g.events <- BlockChangeEvent{}
-// 	case 0x35:
-// 		err = handlePlayerPositionAndLookPacket(g, reader)
-// 		sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
-// 	case 0x5A:
-// 		// handleDeclareRecipesPacket(g, reader)
-// 	case 0x29:
-// 		// err = handleEntityLookAndRelativeMove(g, reader)
-// 	case 0x3B:
-// 		// handleEntityHeadLookPacket(g, reader)
-// 	case 0x28:
-// 		// err = handleEntityRelativeMovePacket(g, reader)
-// 	case 0x20:
-// 		err = handleKeepAlivePacket(g, reader)
-// 	case 0x2B:
-// 		//handleEntityPacket(g, reader)
-// 	case 0x05:
-// 		// err = handleSpawnPlayerPacket(g, reader)
-// 	case 0x2E:
-// 		err = handleWindowItemsPacket(g, reader)
-// 	case 0x48:
-// 		err = handleUpdateHealthPacket(g, reader)
-// 	case 0x0E:
-// 		err = handleChatMessagePacket(g, reader)
-// 	case 0x0B:
-// 		err = handleBlockChangePacket(g, reader)
-// 		g.events <- BlockChangeEvent{}
-// 	case 0x0F:
-// 		err = handleMultiBlockChangePacket(g, reader)
-// 		g.events <- BlockChangeEvent{}
-// 	case 0x1A:
-// 		// should assumes that the server has already closed the connection by the time the packet arrives.
-// 		g.events <- DisconnectEvent{Text: "disconnect"}
-// 		err = fmt.Errorf("disconnect")
-// 	case 0x16:
-// 	// 	err = handleSetSlotPacket(g, reader)
-// 	case 0x51:
-// 		// err = handleSoundEffect(g, reader)
-// 	default:
-// 		// fmt.Printf("ignore pack id %X\n", p.ID)
-// 	}
-// 	return
-// }
+func (c *Client) handlePacket(p pk.Packet) (err error) {
+	switch p.ID {
+	case data.JoinGame:
+		err = handleJoinGamePacket(c, p)
+	case data.PluginMessageClientbound:
+		err = handlePluginPacket(c, p)
+	case data.ServerDifficulty:
+		err = handleServerDifficultyPacket(c, p)
+	case data.SpawnPosition:
+		err = handleSpawnPositionPacket(c, p)
+	case data.PlayerAbilitiesClientbound:
+		err = handlePlayerAbilitiesPacket(c, p)
+		c.conn.WritePacket(
+			//PlayerAbilities packet (serverbound)
+			pk.Marshal(
+				data.ClientSettings,
+				pk.String(c.settings.Locale),
+				pk.Byte(c.settings.ViewDistance),
+				pk.VarInt(c.settings.ChatMode),
+				pk.Boolean(c.settings.ChatColors),
+				pk.UnsignedByte(c.settings.DisplayedSkinParts),
+				pk.VarInt(c.settings.MainHand),
+			),
+		)
+	case data.HeldItemChangeClientbound:
+		err = handleHeldItemPacket(c, p)
+	case 0x21:
+		err = handleChunkDataPacket(c, p)
+		g.events <- BlockChangeEvent{}
+	case 0x35:
+		err = handlePlayerPositionAndLookPacket(c, p)
+		sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
+	case 0x5A:
+		// handleDeclareRecipesPacket(g, reader)
+	case 0x29:
+		// err = handleEntityLookAndRelativeMove(g, reader)
+	case 0x3B:
+		// handleEntityHeadLookPacket(g, reader)
+	case 0x28:
+		// err = handleEntityRelativeMovePacket(g, reader)
+	case 0x20:
+		err = handleKeepAlivePacket(c, p)
+	case 0x2B:
+		//handleEntityPacket(g, reader)
+	case 0x05:
+		// err = handleSpawnPlayerPacket(g, reader)
+	case 0x2E:
+		err = handleWindowItemsPacket(c, p)
+	case 0x48:
+		err = handleUpdateHealthPacket(c, p)
+	case 0x0E:
+		err = handleChatMessagePacket(c, p)
+	case 0x0B:
+		err = handleBlockChangePacket(c, p)
+		g.events <- BlockChangeEvent{}
+	case 0x0F:
+		err = handleMultiBlockChangePacket(c, p)
+		g.events <- BlockChangeEvent{}
+	case 0x1A:
+		// should assumes that the server has already closed the connection by the time the packet arrives.
+		g.events <- DisconnectEvent{Text: "disconnect"}
+		err = fmt.Errorf("disconnect")
+	case 0x16:
+	// 	err = handleSetSlotPacket(g, reader)
+	case 0x51:
+		// err = handleSoundEffect(g, reader)
+	default:
+		// fmt.Printf("ignore pack id %X\n", p.ID)
+	}
+	return
+}
 
 // func handleSoundEffect(g *Client, r *bytes.Reader) error {
 // 	SoundID, err := pk.UnpackVarInt(r)
@@ -351,78 +300,72 @@ package gomcbot
 // 	return
 // }
 
-// func handleJoinGamePacket(g *Client, r *bytes.Reader) error {
-// 	eid, err := pk.UnpackInt32(r)
-// 	if err != nil {
-// 		return fmt.Errorf("read EntityID fail: %v", err)
-// 	}
-// 	g.Info.EntityID = int(eid)
-// 	gamemode, err := r.ReadByte()
-// 	if err != nil {
-// 		return fmt.Errorf("read gamemode fail: %v", err)
-// 	}
-// 	g.Info.Gamemode = int(gamemode & 0x7)
-// 	g.Info.Hardcore = gamemode&0x8 != 0
-// 	dimension, err := pk.UnpackInt32(r)
-// 	if err != nil {
-// 		return fmt.Errorf("read dimension fail: %v", err)
-// 	}
-// 	g.Info.Dimension = int(dimension)
-// 	difficulty, err := r.ReadByte()
-// 	if err != nil {
-// 		return fmt.Errorf("read difficulty fail: %v", err)
-// 	}
-// 	g.Info.Difficulty = int(difficulty)
-// 	// ignore Max Players
-// 	_, err = r.ReadByte()
-// 	if err != nil {
-// 		return fmt.Errorf("read MaxPlayers fail: %v", err)
-// 	}
+func handleJoinGamePacket(g *Client, p pk.Packet) error {
+	var (
+		eid        pk.Int
+		gamemode   pk.Byte
+		dimension  pk.Int
+		difficulty pk.Byte
+		maxPlayers pk.Byte
+		levelType  pk.String
+		rdi        pk.Byte
+	)
+	err := p.Scan(&eid, &gamemode, &dimension, &difficulty, &maxPlayers, &levelType, &rdi)
+	if err != nil {
+		return err
+	}
 
-// 	g.Info.LevelType, err = pk.UnpackString(r)
-// 	if err != nil {
-// 		return fmt.Errorf("read LevelType fail: %v", err)
-// 	}
-// 	rdi, err := r.ReadByte()
-// 	if err != nil {
-// 		return fmt.Errorf("read ReducedDebugInfo fail: %v", err)
-// 	}
-// 	g.Info.ReducedDebugInfo = rdi != 0x00
-// 	return nil
-// }
+	g.Info.EntityID = int(eid)
+	g.Info.Gamemode = int(gamemode & 0x7)
+	g.Info.Hardcore = gamemode&0x8 != 0
+	g.Info.Dimension = int(dimension)
+	g.Info.Difficulty = int(difficulty)
+	g.Info.LevelType = strinig(levelType)
+	g.Info.ReducedDebugInfo = byte(rdi) != 0x00
+	return nil
+}
 
-// func handlePluginPacket(g *Client, r *bytes.Reader) {
-// 	// fmt.Println("Plugin Packet: ", p)
-// }
+func handlePluginPacket(c *Client, p pk.Packet) error {
+	// fmt.Println("Plugin Packet: ", p)
+	return nil
+}
 
-// func handleServerDifficultyPacket(g *Client, r *bytes.Reader) error {
-// 	diff, err := r.ReadByte()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	g.Info.Difficulty = int(diff)
-// 	return nil
-// }
+func handleServerDifficultyPacket(c *Client, p pk.Packet) error {
+	var difficulty pk.Byte
+	err = p.Scan(&difficulty)
+	if err != nil {
+		return err
+	}
+	g.Info.Difficulty = int(difficulty)
+	return nil
+}
 
-// func handleSpawnPositionPacket(g *Client, r *bytes.Reader) (err error) {
-// 	g.Info.SpawnPosition.X, g.Info.SpawnPosition.Y, g.Info.SpawnPosition.Z, err =
-// 		pk.UnpackPosition(r)
-// 	return
-// }
+func handleSpawnPositionPacket(c *Client, p pk.Packet) error {
+	var pos pk.Position
+	err = p.Scan(&pos)
+	if err != nil {
+		return err
+	}
+	c.Info.SpawnPosition.X, c.Info.SpawnPosition.Y, c.Info.SpawnPosition.Z =
+		pos.X, pos.Y, pos.Z
+	return nil
+}
 
-// func handlePlayerAbilitiesPacket(g *Client, r *bytes.Reader) error {
-// 	f, err := r.ReadByte()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	g.abilities.Flags = int8(f)
-// 	g.abilities.FlyingSpeed, err = pk.UnpackFloat(r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	g.abilities.FieldofViewModifier, err = pk.UnpackFloat(r)
-// 	return err
-// }
+func handlePlayerAbilitiesPacket(g *Client, p pk.Packet) error {
+	var (
+		flags    pk.Byte
+		flySpeed pk.Float
+		viewMod  pk.Float
+	)
+	err := p.Scan(&flags, &flySpeed, &viewMod)
+	if err != nil {
+		return err
+	}
+	g.abilities.Flags = int8(flags)
+	g.abilities.FlyingSpeed = float32(flySpeed)
+	g.abilities.FieldofViewModifier = float32(viewMod)
+	return nil
+}
 
 // func handleHeldItemPacket(g *Client, r *bytes.Reader) error {
 // 	hi, err := r.ReadByte()

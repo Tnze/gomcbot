@@ -1,8 +1,8 @@
 package gomcbot
 
-// import pk "github.com/Tnze/gomcbot/network/packet"
+import pk "github.com/Tnze/gomcbot/network/packet"
 
-// Settings 客户端设置
+// Settings of client
 type Settings struct {
 	Locale             string //地区
 	ViewDistance       int    //视距
@@ -27,7 +27,7 @@ const (
 	Hat
 )
 
-//DefaultSettings 定义了客户端的默认设置
+//DefaultSettings are the default settings of client
 var DefaultSettings = Settings{
 	Locale:             "zh_CN",
 	ViewDistance:       15,
@@ -36,14 +36,3 @@ var DefaultSettings = Settings{
 	MainHand:           1,
 	ReciveMap:          true,
 }
-
-// func (s *Settings) pack() (p *pk.Packet) {
-// 	p = new(pk.Packet)
-// 	p.ID = 0x04
-// 	p.Data = append(p.Data, pk.PackString(s.Locale)...)
-// 	p.Data = append(p.Data, byte(s.ViewDistance))
-// 	p.Data = append(p.Data, pk.PackVarInt(int32(s.ChatMode))...)
-// 	p.Data = append(p.Data, pk.PackBoolean(s.ChatColors), byte(s.DisplayedSkinParts))
-// 	p.Data = append(p.Data, pk.PackVarInt(int32(s.MainHand))...)
-// 	return
-// }
