@@ -100,3 +100,55 @@ const (
 	DeclareRecipes
 	Tags //0x5B
 )
+
+//Serverbound packet IDs
+const (
+	TeleportConfirm byte = iota //0x00
+	QueryBlockNBT
+	SetDifficulty
+	ChatMessageServerbound
+	ClientStatus
+	ClientSettings
+	TabCompleteServerbound
+	ConfirmTransactionServerbound
+	ClickWindowButton
+	ClickWindow
+	CloseWindowServerbound
+	PluginMessageServerbound
+	EditBook
+	QueryEntityNBT
+	UseEntity
+	KeepAliveServerbound
+
+	LockDifficulty //0x10
+	PlayerPosition
+	PlayerPositionAndLookServerbound
+	PlayerLook
+	Player
+	VehicleMoveServerbound
+	SteerBoat
+	PickItem
+	CraftRecipeRequest
+	PlayerAbilitiesServerbound
+	PlayerDigging
+	EntityAction
+	SteerVehicle
+	RecipeBookData
+	NameItem
+	ResourcePackStatus
+
+	AdvancementTab //0x20
+	SelectTrade
+	SetBeaconEffect
+	HeldItemChangeServerbound
+	UpdateCommandBlock
+	UpdateCommandBlockMinecart
+	CreativeInventoryAction
+	UpdateJigsawBlock
+	UpdateStructureBlock
+	UpdateSign
+	AnimationServerbound
+	Spectate
+	PlayerBlockPlacement
+	UseItem //0x2D
+)
