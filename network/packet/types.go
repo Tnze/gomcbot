@@ -137,6 +137,16 @@ func (ub UnsignedByte) Encode() []byte {
 	return []byte{byte(ub)}
 }
 
+//Decode a UnsignedByte
+func (ub *UnsignedByte) Decode(r io.ByteReader) error {
+	v, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	*ub = UnsignedByte(v)
+	return nil
+}
+
 // Encode a Signed Short
 func (s Short) Encode() []byte {
 	n := uint16(s)

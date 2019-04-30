@@ -36,7 +36,7 @@ func handleEncryptionRequest(c *Client, pack pk.Packet) error {
 	if err := pack.Scan(&er); err != nil {
 		return err
 	}
-	err := loginAuth(c.AsTk, c.Name, c.UUID, key, er) //向Mojang验证
+	err := loginAuth(c.AsTk, c.Name, c.Auth.UUID, key, er) //向Mojang验证
 	if err != nil {
 		return fmt.Errorf("login fail: %v", err)
 	}

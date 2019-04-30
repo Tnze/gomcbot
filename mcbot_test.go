@@ -25,6 +25,11 @@ func TestJoinServerOffline(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println("Login success")
+
+	err = c.HandleGame()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestJoinOnlineServer(t *testing.T) {
