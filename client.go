@@ -12,7 +12,7 @@ type Client struct {
 	// Info      PlayerInfo
 	// abilities PlayerAbilities
 	settings Settings
-	// player    Player
+	// player   Player
 	// wd        world //the map data
 
 }

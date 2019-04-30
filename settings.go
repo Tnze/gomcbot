@@ -1,7 +1,5 @@
 package gomcbot
 
-import pk "github.com/Tnze/gomcbot/network/packet"
-
 // Settings of client
 type Settings struct {
 	Locale             string //地区

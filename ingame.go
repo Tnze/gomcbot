@@ -73,7 +73,7 @@ func (c *Client) handlePacket(p pk.Packet) (err error) {
 	case data.PlayerAbilitiesClientbound:
 		err = handlePlayerAbilitiesPacket(c, p)
 		c.conn.WritePacket(
-			//PlayerAbilities packet (serverbound)
+			//ClientSettings packet (serverbound)
 			pk.Marshal(
 				data.ClientSettings,
 				pk.String(c.settings.Locale),
@@ -86,12 +86,11 @@ func (c *Client) handlePacket(p pk.Packet) (err error) {
 		)
 	case data.HeldItemChangeClientbound:
 		err = handleHeldItemPacket(c, p)
-	case 0x21:
+	case data.ChunkData:
 		err = handleChunkDataPacket(c, p)
-		g.events <- BlockChangeEvent{}
-	case 0x35:
+	case data.PlayerPositionAndLookClientbound:
 		err = handlePlayerPositionAndLookPacket(c, p)
-		sendPlayerPositionAndLookPacket(g) // to confirm the spawn position
+		sendPlayerPositionAndLookPacket(c) // to confirm the position
 	case 0x5A:
 		// handleDeclareRecipesPacket(g, reader)
 	case 0x29:
@@ -100,27 +99,25 @@ func (c *Client) handlePacket(p pk.Packet) (err error) {
 		// handleEntityHeadLookPacket(g, reader)
 	case 0x28:
 		// err = handleEntityRelativeMovePacket(g, reader)
-	case 0x20:
+	case data.KeepAliveClientbound:
 		err = handleKeepAlivePacket(c, p)
 	case 0x2B:
 		//handleEntityPacket(g, reader)
 	case 0x05:
 		// err = handleSpawnPlayerPacket(g, reader)
-	case 0x2E:
+	case data.WindowItems:
 		err = handleWindowItemsPacket(c, p)
-	case 0x48:
+	case data.UpdateHealth:
 		err = handleUpdateHealthPacket(c, p)
-	case 0x0E:
+	case data.ChatMessageClientbound:
 		err = handleChatMessagePacket(c, p)
-	case 0x0B:
+	case data.BlockChange:
 		err = handleBlockChangePacket(c, p)
-		g.events <- BlockChangeEvent{}
-	case 0x0F:
+	case data.MultiBlockChange:
 		err = handleMultiBlockChangePacket(c, p)
-		g.events <- BlockChangeEvent{}
 	case 0x1A:
 		// should assumes that the server has already closed the connection by the time the packet arrives.
-		g.events <- DisconnectEvent{Text: "disconnect"}
+
 		err = fmt.Errorf("disconnect")
 	case 0x16:
 	// 	err = handleSetSlotPacket(g, reader)
@@ -195,110 +192,110 @@ func (c *Client) handlePacket(p pk.Packet) (err error) {
 // 	return nil
 // }
 
-// func handleMultiBlockChangePacket(g *Client, r *bytes.Reader) error {
-// 	if !g.settings.ReciveMap {
-// 		return nil
-// 	}
+func handleMultiBlockChangePacket(c *Client, p pk.Packet) error {
+	if !c.settings.ReciveMap {
+		return nil
+	}
 
-// 	cX, err := pk.UnpackInt32(r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	cY, err := pk.UnpackInt32(r)
-// 	if err != nil {
-// 		return err
-// 	}
+	var cX, cY pk.Int
 
-// 	c := g.wd.chunks[chunkLoc{int(cX), int(cY)}]
-// 	if c != nil {
-// 		RecordCount, err := pk.UnpackVarInt(r)
-// 		if err != nil {
-// 			return err
-// 		}
+	err := p.Scan(&cX, &cY)
+	if err != nil {
+		return err
+	}
 
-// 		for i := int32(0); i < RecordCount; i++ {
-// 			xz, err := r.ReadByte()
-// 			if err != nil {
-// 				return err
-// 			}
-// 			y, err := r.ReadByte()
-// 			if err != nil {
-// 				return err
-// 			}
-// 			BlockID, err := pk.UnpackVarInt(r)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			x, z := xz>>4, xz&0x0F
+	c := g.wd.chunks[chunkLoc{int(cX), int(cY)}]
+	if c != nil {
+		RecordCount, err := pk.UnpackVarInt(r)
+		if err != nil {
+			return err
+		}
 
-// 			c.sections[y/16].blocks[x][y%16][z] = Block{id: uint(BlockID)}
-// 		}
-// 	}
+		for i := int32(0); i < RecordCount; i++ {
+			xz, err := r.ReadByte()
+			if err != nil {
+				return err
+			}
+			y, err := r.ReadByte()
+			if err != nil {
+				return err
+			}
+			BlockID, err := pk.UnpackVarInt(r)
+			if err != nil {
+				return err
+			}
+			x, z := xz>>4, xz&0x0F
 
-// 	return nil
-// }
+			c.sections[y/16].blocks[x][y%16][z] = Block{id: uint(BlockID)}
+		}
+	}
 
-// func handleBlockChangePacket(g *Client, r *bytes.Reader) error {
-// 	if !g.settings.ReciveMap {
-// 		return nil
-// 	}
-// 	x, y, z, err := pk.UnpackPosition(r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	c := g.wd.chunks[chunkLoc{x >> 4, z >> 4}]
-// 	if c != nil {
-// 		id, err := pk.UnpackVarInt(r)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		c.sections[y/16].blocks[x&15][y&15][z&15] = Block{id: uint(id)}
-// 	}
+	return nil
+}
 
-// 	return nil
-// }
+func handleBlockChangePacket(c *Client, p pk.Packet) error {
+	if !c.settings.ReciveMap {
+		return nil
+	}
+	var pos pk.Position
+	err := p.Scan(&pos)
+	if err != nil {
+		return err
+	}
 
-// func handleChatMessagePacket(g *Client, r *bytes.Reader) error {
+	c := g.wd.chunks[chunkLoc{x >> 4, z >> 4}]
+	if c != nil {
+		id, err := pk.UnpackVarInt(r)
+		if err != nil {
+			return err
+		}
+		c.sections[y/16].blocks[x&15][y&15][z&15] = Block{id: uint(id)}
+	}
 
-// 	s, err := pk.UnpackString(r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	pos, err := r.ReadByte()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	cm, err := newChatMsg([]byte(s))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	g.events <- ChatMessageEvent{cm, pos}
+	return nil
+}
 
-// 	return nil
-// }
+func handleChatMessagePacket(c *Client, p pk.Packet) error {
+	var (
+		s   pk.String
+		pos pk.Byte
+	)
 
-// func handleUpdateHealthPacket(g *Client, r *bytes.Reader) (err error) {
-// 	g.player.Health, err = pk.UnpackFloat(r)
-// 	if err != nil {
-// 		return
-// 	}
-// 	g.player.Food, err = pk.UnpackVarInt(r)
-// 	if err != nil {
-// 		return
-// 	}
-// 	g.player.FoodSaturation, err = pk.UnpackFloat(r)
-// 	if err != nil {
-// 		return
-// 	}
+	if err := p.Scan(&s, &pos); err != nil {
+		return err
+	}
 
-// 	if g.player.Health < 1 { //player is dead
-// 		g.events <- PlayerDeadEvent{} //Dead event
-// 		sendPlayerPositionAndLookPacket(g)
-// 		time.Sleep(time.Second * 2)  //wait for 2 sec make it more like a human
-// 		sendClientStatusPacket(g, 0) //status 0 means perform respawn
-// 	}
-// 	return
-// }
+	cm, err := newChatMsg([]byte(s))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func handleUpdateHealthPacket(c *Client, p pk.Packet) (err error) {
+	var (
+		Health         pk.Float
+		Food           pk.VarInt
+		FoodSaturation pk.Float
+	)
+
+	err = p.Scan(&Health, &Food, &FoodSaturation)
+	if err != nil {
+		return
+	}
+
+	c.player.Health = Health
+	c.player.Food = Food
+	c.player.FoodSaturation = FoodSaturation
+
+	if c.player.Health < 1 { //player is dead
+		sendPlayerPositionAndLookPacket(c)
+		time.Sleep(time.Second * 2)  //wait for 2 sec make it more like a human
+		sendClientStatusPacket(c, 0) //status 0 means perform respawn
+	}
+	return
+}
 
 func handleJoinGamePacket(g *Client, p pk.Packet) error {
 	var (
@@ -367,90 +364,69 @@ func handlePlayerAbilitiesPacket(g *Client, p pk.Packet) error {
 	return nil
 }
 
-// func handleHeldItemPacket(g *Client, r *bytes.Reader) error {
-// 	hi, err := r.ReadByte()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	g.player.HeldItem = int(hi)
-// 	return nil
-// }
+func handleHeldItemPacket(c *Client, p pk.Packet) error {
+	var hi pk.Byte
+	if err := p.Scan(&hi); err != nil {
+		return err
+	}
+	g.player.HeldItem = int(hi)
+	return nil
+}
 
-// func handleChunkDataPacket(g *Client, p *pk.Packet) error {
-// 	if !g.settings.ReciveMap {
-// 		return nil
-// 	}
+func handleChunkDataPacket(g *Client, p pk.Packet) error {
+	if !g.settings.ReciveMap {
+		return nil
+	}
 
-// 	c, x, y, err := unpackChunkDataPacket(p, g.Info.Dimension == 0)
-// 	g.wd.chunks[chunkLoc{x, y}] = c
-// 	return err
-// }
+	c, x, y, err := unpackChunkDataPacket(p, g.Info.Dimension == 0)
+	g.wd.chunks[chunkLoc{x, y}] = c
+	return err
+}
 
 // var isSpawn bool
 
-// func handlePlayerPositionAndLookPacket(g *Client, r *bytes.Reader) error {
-// 	x, err := pk.UnpackDouble(r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	y, err := pk.UnpackDouble(r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	z, err := pk.UnpackDouble(r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	yaw, err := pk.UnpackFloat(r)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	pitch, err := pk.UnpackFloat(r)
-// 	if err != nil {
-// 		return err
-// 	}
+func handlePlayerPositionAndLookPacket(c *Client, p pk.Packet) error {
+	var (
+		x, y, z    pk.Double
+		yaw, pitch pk.Float
+		flags      pk.Byte
+		TeleportID pk.VarInt
+	)
 
-// 	flags, err := r.ReadByte()
-// 	if err != nil {
-// 		return err
-// 	}
+	err := p.Scan(&x, &y, &z, &yaw, &pitch, &flags, &TeleportID)
+	if err != nil {
+		return err
+	}
 
-// 	if flags&0x01 == 0 {
-// 		g.player.X = x
-// 	} else {
-// 		g.player.X += x
-// 	}
-// 	if flags&0x02 == 0 {
-// 		g.player.Y = y
-// 	} else {
-// 		g.player.Y += y
-// 	}
-// 	if flags&0x04 == 0 {
-// 		g.player.Z = z
-// 	} else {
-// 		g.player.Z += z
-// 	}
-// 	if flags&0x08 == 0 {
-// 		g.player.Yaw = yaw
-// 	} else {
-// 		g.player.Yaw += yaw
-// 	}
-// 	if flags&0x10 == 0 {
-// 		g.player.Pitch = pitch
-// 	} else {
-// 		g.player.Pitch += pitch
-// 	}
-// 	//confirm this packet with Teleport Confirm
-// 	TeleportID, _ := pk.UnpackVarInt(r)
-// 	sendTeleportConfirmPacket(g, TeleportID)
+	if flags&0x01 == 0 {
+		c.player.X = x
+	} else {
+		c.player.X += x
+	}
+	if flags&0x02 == 0 {
+		c.player.Y = y
+	} else {
+		c.player.Y += y
+	}
+	if flags&0x04 == 0 {
+		c.player.Z = z
+	} else {
+		c.player.Z += z
+	}
+	if flags&0x08 == 0 {
+		c.player.Yaw = yaw
+	} else {
+		c.player.Yaw += yaw
+	}
+	if flags&0x10 == 0 {
+		c.player.Pitch = pitch
+	} else {
+		c.player.Pitch += pitch
+	}
+	sendTeleportConfirmPacket(c, TeleportID)
 
-// 	//handle PlayerSpawnEvent
-// 	if !isSpawn {
-// 		g.events <- PlayerSpawnEvent{}
-// 		isSpawn = true
-// 	}
-// 	return nil
-// }
+	return nil
+}
 
 // func handleDeclareRecipesPacket(g *Client, r *bytes.Reader) {
 // 	//Ignore Declare Recipes Packet
@@ -557,11 +533,14 @@ func handlePlayerAbilitiesPacket(g *Client, p pk.Packet) error {
 // 	return nil
 // }
 
-// func handleKeepAlivePacket(g *Client, r *bytes.Reader) (err error) {
-// 	KeepAliveID, err := pk.UnpackInt64(r)
-// 	sendKeepAlivePacket(g, KeepAliveID)
-// 	return
-// }
+func handleKeepAlivePacket(c *Client, p pk.Packet) error {
+	var KeepAliveID pk.Long
+	if err := p.Scan(&KeepAliveID); err != nil {
+		return err
+	}
+	sendKeepAlivePacket(c, KeepAliveID)
+	return nil
+}
 
 // func handleEntityPacket(g *Client, r *bytes.Reader) {
 // 	// initialize an entity.
@@ -611,32 +590,22 @@ func handlePlayerAbilitiesPacket(g *Client, p pk.Packet) error {
 // 	return nil
 // }
 
-// func handleWindowItemsPacket(g *Client, r *bytes.Reader) (err error) {
-// 	WindowID, err := r.ReadByte()
-// 	if err != nil {
-// 		return
-// 	}
+func handleWindowItemsPacket(g *Client, p pk.Packet) (err error) {
+	var (
+		WindowID pk.Byte
+		solts    Solts
+	)
+	err = p.Scan(&WindowID, &solts)
+	if err != nil {
+		return
+	}
 
-// 	Count, err := pk.UnpackInt16(r)
-// 	if err != nil {
-// 		return
-// 	}
-
-// 	solts := make([]Solt, Count)
-// 	for i := int16(0); i < Count; i++ {
-// 		solts[i], err = unpackSolt(r)
-// 		if err != nil {
-// 			return
-// 		}
-// 	}
-
-// 	switch WindowID {
-// 	case 0: //is player inventory
-// 		g.player.Inventory = solts
-// 		g.events <- InventoryChangeEvent(-2)
-// 	}
-// 	return nil
-// }
+	switch WindowID {
+	case 0: //is player inventory
+		g.player.Inventory = solts
+	}
+	return nil
+}
 
 // func sendTeleportConfirmPacket(g *Client, TeleportID int32) {
 // 	g.sendChan <- pk.Packet{
@@ -645,20 +614,30 @@ func handlePlayerAbilitiesPacket(g *Client, p pk.Packet) error {
 // 	}
 // }
 
-// func sendPlayerPositionAndLookPacket(g *Client) {
-// 	var data []byte
-// 	data = append(data, pk.PackDouble(g.player.X)...)
-// 	data = append(data, pk.PackDouble(g.player.Y)...)
-// 	data = append(data, pk.PackDouble(g.player.Z)...)
-// 	data = append(data, pk.PackFloat(g.player.Yaw)...)
-// 	data = append(data, pk.PackFloat(g.player.Pitch)...)
-// 	data = append(data, pk.PackBoolean(g.player.OnGround))
+func sendPlayerPositionAndLookPacket(c *Client) {
+	var data []byte
+	data = append(data, pk.PackDouble(g.player.X)...)
+	data = append(data, pk.PackDouble(g.player.Y)...)
+	data = append(data, pk.PackDouble(g.player.Z)...)
+	data = append(data, pk.PackFloat(g.player.Yaw)...)
+	data = append(data, pk.PackFloat(g.player.Pitch)...)
+	data = append(data, pk.PackBoolean(g.player.OnGround))
 
-// 	g.sendChan <- pk.Packet{
-// 		ID:   0x11,
-// 		Data: data,
-// 	}
-// }
+	g.sendChan <- pk.Packet{
+		ID:   0x11,
+		Data: data,
+	}
+
+	c.conn.WritePacket(pk.Marshal(
+		data.PlayerPositionAndLookServerbound,
+		pk.Double(c.player.X),
+		pk.Double(c.player.Y),
+		pk.Double(c.player.Z),
+		pk.Float(c.player.Yaw),
+		pk.Float(c.player.Pitch),
+		pk.Boolean(c.player.OnGround),
+	))
+}
 
 // func sendPlayerLookPacket(g *Client) {
 // 	var data []byte
@@ -684,12 +663,12 @@ func handlePlayerAbilitiesPacket(g *Client, p pk.Packet) error {
 // 	}
 // }
 
-// func sendKeepAlivePacket(g *Client, KeepAliveID int64) {
-// 	g.sendChan <- pk.Packet{
-// 		ID:   0x0E,
-// 		Data: pk.PackUint64(uint64(KeepAliveID)),
-// 	}
-// }
+func sendKeepAlivePacket(g *Client, KeepAliveID int64) {
+	g.sendChan <- pk.Packet{
+		ID:   0x0E,
+		Data: pk.PackUint64(uint64(KeepAliveID)),
+	}
+}
 
 // func sendClientStatusPacket(g *Client, status int32) {
 // 	data := pk.PackVarInt(status)

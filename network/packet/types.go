@@ -122,6 +122,16 @@ func (b Byte) Encode() []byte {
 	return []byte{byte(b)}
 }
 
+//Decode a Byte
+func (b *Byte) Decode(r io.ByteReader) error {
+	v, err := r.ReadByte()
+	if err != nil {
+		return err
+	}
+	*b = Byte(v)
+	return nil
+}
+
 //Encode a UnsignedByte
 func (ub UnsignedByte) Encode() []byte {
 	return []byte{byte(ub)}
