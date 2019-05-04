@@ -1,5 +1,5 @@
 # GoMCbot
-### This package is removed to [github.com/Tnze/go-mc/bot](https://github.com/Tnze/go-mc)
+### This package has been moved to [github.com/Tnze/go-mc/bot](https://github.com/Tnze/go-mc)
 A golang minecraft robot package.
 
 
