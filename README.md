@@ -1,7 +1,7 @@
 # GoMCbot
+### This package is removed to [github.com/Tnze/go-mc/bot](https://github.com/Tnze/go-mc)
 A golang minecraft robot package.
 
-> **This project is removed to `github.com/Tnze/go-mc/bot`**
 
 - Current Version: `1.13.2`  (1.14 version is comming)
 - Protocol Version: `404`
