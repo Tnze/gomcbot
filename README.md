@@ -1,5 +1,6 @@
 # GoMCbot
 ### This package has been moved to [github.com/Tnze/go-mc/bot](https://github.com/Tnze/go-mc)
+### 注意,这个版本已经停止开发了，新版在[github.com/Tnze/go-mc/bot](https://github.com/Tnze/go-mc)，新版的代码更加整洁，而且支持1.14+
 A golang minecraft robot package.
 
 
